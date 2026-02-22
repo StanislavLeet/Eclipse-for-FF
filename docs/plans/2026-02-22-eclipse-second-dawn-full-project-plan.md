@@ -57,13 +57,13 @@ with email notifications. Private use among friends and family.
 - Create: `app/models/base.py`
 - Create: `alembic/versions/001_initial_schema.py`
 
-- [ ] Define `User` model: id, email, username, hashed_password, created_at
-- [ ] Define `Game` model: id, name, status (lobby/active/finished), current_round, current_phase, max_players, created_at
-- [ ] Define `Player` model: id, game_id, user_id, species, turn_order, is_active_turn, vp_count
-- [ ] Define `GameInvite` model: id, game_id, invitee_email, token, accepted
-- [ ] Run Alembic migration to create tables
-- [ ] Write model unit tests (create, read, relationships)
-- [ ] Run test suite - must pass before task 3
+- [x] Define `User` model: id, email, username, hashed_password, created_at
+- [x] Define `Game` model: id, name, status (lobby/active/finished), current_round, current_phase, max_players, created_at
+- [x] Define `Player` model: id, game_id, user_id, species, turn_order, is_active_turn, vp_count
+- [x] Define `GameInvite` model: id, game_id, invitee_email, token, accepted
+- [x] Run Alembic migration to create tables
+- [x] Write model unit tests (create, read, relationships)
+- [x] Run test suite - must pass before task 3
 
 ### Task 3: User Authentication
 

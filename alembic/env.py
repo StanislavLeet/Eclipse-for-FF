@@ -11,7 +11,7 @@ from alembic import context
 from app.models.base import Base  # noqa: F401
 
 # Import all models here so their tables are registered with Base.metadata
-# Add imports as new models are created in future tasks
+import app.models  # noqa: F401 - registers all models with Base.metadata
 
 config = context.config
 
