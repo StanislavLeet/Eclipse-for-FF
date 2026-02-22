@@ -1,3 +1,24 @@
 
 # ralphex progress logs
 .ralphex/progress/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment
+venv/
+.venv/
+
+# Environment secrets
+.env
+
+# Database files
+*.db
+*.sqlite
+
+# Test/coverage
+.pytest_cache/
+.coverage
+htmlcov/

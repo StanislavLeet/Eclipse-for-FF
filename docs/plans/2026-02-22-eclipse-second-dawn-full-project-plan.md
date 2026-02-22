@@ -38,15 +38,15 @@ with email notifications. Private use among friends and family.
 - Create: `Makefile` (dev shortcuts)
 - Create: `.env.example`
 
-- [ ] Initialize Python project with FastAPI, SQLAlchemy, Alembic, pytest, python-dotenv dependencies
-- [ ] Configure FastAPI app with CORS, static file serving for frontend
-- [ ] Set up PostgreSQL connection via SQLAlchemy async engine
-- [ ] Set up Alembic for database migrations
-- [ ] Create basic health check endpoint `GET /health`
-- [ ] Create frontend scaffold (index.html, empty JS/CSS)
-- [ ] Write conftest.py with test database setup using a separate test DB
-- [ ] Write smoke test: health check returns 200
-- [ ] Run test suite - must pass before task 2
+- [x] Initialize Python project with FastAPI, SQLAlchemy, Alembic, pytest, python-dotenv dependencies
+- [x] Configure FastAPI app with CORS, static file serving for frontend
+- [x] Set up PostgreSQL connection via SQLAlchemy async engine
+- [x] Set up Alembic for database migrations
+- [x] Create basic health check endpoint `GET /health`
+- [x] Create frontend scaffold (index.html, empty JS/CSS)
+- [x] Write conftest.py with test database setup using a separate test DB
+- [x] Write smoke test: health check returns 200
+- [x] Run test suite - must pass before task 2
 
 ### Task 2: Database Models - Users, Games, Players
 
