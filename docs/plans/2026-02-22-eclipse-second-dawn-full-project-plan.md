@@ -92,15 +92,15 @@ with email notifications. Private use among friends and family.
 - Create: `app/data/species.py` (static species definitions)
 - Modify: `alembic/versions/` (new migration if needed)
 
-- [ ] Define all 9 species as static data: Human, Eridani Empire, Hydran Progress, Planta, Descendants of Draco, Mechanema, Orion Hegemony, Exiles, Terran Directorate -- each with starting resources, homeworld stats, special abilities
-- [ ] Implement `POST /games` (create game, set max players 2-6, map size)
-- [ ] Implement `GET /games/{id}` (game info, player list)
-- [ ] Implement `POST /games/{id}/invite` (send invite email with token link)
-- [ ] Implement `POST /games/{id}/join` (accept invite, join lobby)
-- [ ] Implement `POST /games/{id}/select-species` (choose species, validate no duplicates)
-- [ ] Implement `POST /games/{id}/start` (host starts game, validates all players ready, triggers map generation)
-- [ ] Write tests: game creation, invite flow, species selection uniqueness, start validation
-- [ ] Run test suite - must pass before task 5
+- [x] Define all 9 species as static data: Human, Eridani Empire, Hydran Progress, Planta, Descendants of Draco, Mechanema, Orion Hegemony, Exiles, Terran Directorate -- each with starting resources, homeworld stats, special abilities
+- [x] Implement `POST /games` (create game, set max players 2-6, map size)
+- [x] Implement `GET /games/{id}` (game info, player list)
+- [x] Implement `POST /games/{id}/invite` (send invite email with token link)
+- [x] Implement `POST /games/{id}/join` (accept invite, join lobby)
+- [x] Implement `POST /games/{id}/select-species` (choose species, validate no duplicates)
+- [x] Implement `POST /games/{id}/start` (host starts game, validates all players ready, triggers map generation)
+- [x] Write tests: game creation, invite flow, species selection uniqueness, start validation
+- [x] Run test suite - must pass before task 5
 
 ### Task 5: Galaxy Map Generation
 
