@@ -4,6 +4,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from app.routers import auth
+
 app = FastAPI(
     title="Eclipse: Second Dawn for the Galaxy",
     description="Browser-based digital implementation of Eclipse Second Dawn",
@@ -17,6 +19,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth.router)
 
 # Serve frontend static files if the directory exists
 frontend_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")

@@ -74,14 +74,14 @@ with email notifications. Private use among friends and family.
 - Create: `app/dependencies.py` (get_current_user)
 - Modify: `app/main.py`
 
-- [ ] Implement `POST /auth/register` (email, username, password)
-- [ ] Implement `POST /auth/login` returning JWT access token
-- [ ] Implement `GET /auth/me` returning current user info
-- [ ] Implement `POST /auth/logout` (invalidate token)
-- [ ] Add `get_current_user` dependency for protected routes
-- [ ] Hash passwords with bcrypt
-- [ ] Write auth tests: register, login, protected route access, invalid credentials
-- [ ] Run test suite - must pass before task 4
+- [x] Implement `POST /auth/register` (email, username, password)
+- [x] Implement `POST /auth/login` returning JWT access token
+- [x] Implement `GET /auth/me` returning current user info
+- [x] Implement `POST /auth/logout` (invalidate token)
+- [x] Add `get_current_user` dependency for protected routes
+- [x] Hash passwords with bcrypt
+- [x] Write auth tests: register, login, protected route access, invalid credentials
+- [x] Run test suite - must pass before task 4
 
 ### Task 4: Game Lobby & Species Selection
 
