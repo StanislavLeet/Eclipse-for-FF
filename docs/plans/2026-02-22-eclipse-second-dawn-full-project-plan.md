@@ -252,15 +252,15 @@ with email notifications. Private use among friends and family.
 - Create: `app/services/council_service.py`
 - Create: `app/routers/council.py`
 
-- [ ] Define Resolution cards as static data (all Eclipse resolutions: tax, military, trade, etc. with their effects)
-- [ ] Define `CouncilState` model: game_id, current_resolution_id, ambassador_placements (JSON per player), vp_from_council (JSON per player)
-- [ ] Implement ambassador placement (players place ambassadors from their supply based on controlled systems)
-- [ ] Implement voting: count ambassadors per resolution side, determine winner
-- [ ] Apply resolution effects to game state (modify resource income, VP, etc.)
-- [ ] Implement council VP: 1VP per ambassador on winning side
-- [ ] Trigger Galactic Council vote during Upkeep phase once Galactic Center is explored
-- [ ] Write tests: ambassador count, voting tallying, resolution effect application, VP distribution
-- [ ] Run test suite - must pass before task 14
+- [x] Define Resolution cards as static data (all Eclipse resolutions: tax, military, trade, etc. with their effects)
+- [x] Define `CouncilState` model: game_id, current_resolution_id, ambassador_placements (JSON per player), vp_from_council (JSON per player)
+- [x] Implement ambassador placement (players place ambassadors from their supply based on controlled systems)
+- [x] Implement voting: count ambassadors per resolution side, determine winner
+- [x] Apply resolution effects to game state (modify resource income, VP, etc.)
+- [x] Implement council VP: 1VP per ambassador on winning side
+- [x] Trigger Galactic Council vote during Upkeep phase once Galactic Center is explored
+- [x] Write tests: ambassador count, voting tallying, resolution effect application, VP distribution
+- [x] Run test suite - must pass before task 14
 
 ### Task 14: Email Notifications & Async Turn Handoff
 

@@ -215,6 +215,10 @@ async def _transition_phase(
     elif game.current_phase == GamePhase.combat:
         game.current_phase = GamePhase.upkeep
     elif game.current_phase == GamePhase.upkeep:
+        # Run Galactic Council vote if the center has been explored
+        from app.services.council_service import run_council_if_active
+        await run_council_if_active(db, game, [p.id for p in players])
+
         # Apply upkeep (income, influence costs, bankruptcy) for all players
         await apply_upkeep_for_game([p.id for p in players], db)
 

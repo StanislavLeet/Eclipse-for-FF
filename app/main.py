@@ -8,6 +8,7 @@ from app.routers import auth, games, turns
 from app.routers import research
 from app.routers import ships
 from app.routers import combat
+from app.routers import council
 
 app = FastAPI(
     title="Eclipse: Second Dawn for the Galaxy",
@@ -29,6 +30,8 @@ app.include_router(turns.router)
 app.include_router(research.router)
 app.include_router(ships.router)
 app.include_router(combat.router)
+app.include_router(council.router)
+app.include_router(council.council_meta_router)
 
 # Serve frontend static files if the directory exists
 frontend_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")

@@ -1,4 +1,5 @@
 from app.models.base import Base  # noqa: F401
+from app.models.council import CouncilState  # noqa: F401
 from app.models.discovery_tile import DiscoveryTile  # noqa: F401
 from app.models.game import Game, GamePhase, GameStatus  # noqa: F401
 from app.models.game_action import ActionType, GameAction  # noqa: F401
