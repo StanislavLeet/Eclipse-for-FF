@@ -11,6 +11,8 @@ from app.services.resource_service import (
     use_influence_disc,
     validate_and_deduct_build_cost,
 )
+from app.services.ship_service import apply_upgrade, build_ship
+from app.services.research_service import get_player_tech_ids
 
 
 async def get_active_player(db: AsyncSession, game_id: int) -> Player | None:
@@ -82,6 +84,19 @@ async def submit_action(
     # Spending validation for specific action types
     if action_type == ActionType.build and payload and "ship_type" in payload:
         await validate_and_deduct_build_cost(player.id, payload["ship_type"], db)
+        await build_ship(player.id, game.id, payload["ship_type"], db)
+
+    if action_type == ActionType.upgrade:
+        if not payload or "ship_type" not in payload or "slots" not in payload:
+            raise ValueError("UPGRADE action requires 'ship_type' and 'slots' in payload")
+        owned_tech_ids = await get_player_tech_ids(player.id, db)
+        await apply_upgrade(
+            player_id=player.id,
+            ship_type=payload["ship_type"],
+            new_slots=payload["slots"],
+            owned_tech_ids=owned_tech_ids,
+            db=db,
+        )
 
     if action_type == ActionType.research:
         if not payload or "tech_id" not in payload:

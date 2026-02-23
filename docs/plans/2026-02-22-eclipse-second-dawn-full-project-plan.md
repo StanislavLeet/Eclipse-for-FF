@@ -181,16 +181,16 @@ with email notifications. Private use among friends and family.
 - Create: `app/services/ship_service.py`
 - Create: `app/routers/ships.py`
 
-- [ ] Define all ship components as static data: Cannons, Missiles, Shields, Drives, Hull, Computer, Source -- with stats (initiative, power consumption, power output, damage, hits)
-- [ ] Define 4 ship types: Interceptor, Cruiser, Dreadnought, Starbase -- with slot counts and base stats
-- [ ] Define `ShipBlueprint` model: player_id, ship_type, component slots (JSON), is_valid (sufficient power)
-- [ ] Define `Ship` model: id, game_id, player_id, ship_type, hex_tile_id, hp_remaining, is_ancient
-- [ ] Implement UPGRADE action: modify blueprint, validate power balance, validate components unlocked via tech
-- [ ] Implement BUILD action: spend materials per ship type, place ship on player homeworld hex
-- [ ] Implement blueprint validation (power must not be negative, required slots filled)
-- [ ] Initialize default blueprints per species on game start
-- [ ] Write tests: blueprint validation, power balance, build cost, species-specific defaults
-- [ ] Run test suite - must pass before task 10
+- [x] Define all ship components as static data: Cannons, Missiles, Shields, Drives, Hull, Computer, Source -- with stats (initiative, power consumption, power output, damage, hits)
+- [x] Define 4 ship types: Interceptor, Cruiser, Dreadnought, Starbase -- with slot counts and base stats
+- [x] Define `ShipBlueprint` model: player_id, ship_type, component slots (JSON), is_valid (sufficient power)
+- [x] Define `Ship` model: id, game_id, player_id, ship_type, hex_tile_id, hp_remaining, is_ancient
+- [x] Implement UPGRADE action: modify blueprint, validate power balance, validate components unlocked via tech
+- [x] Implement BUILD action: spend materials per ship type, place ship on player homeworld hex
+- [x] Implement blueprint validation (power must not be negative, required slots filled)
+- [x] Initialize default blueprints per species on game start
+- [x] Write tests: blueprint validation, power balance, build cost, species-specific defaults
+- [x] Run test suite - must pass before task 10
 
 ### Task 10: Movement & Exploration
 

@@ -10,6 +10,7 @@ from app.models.user import User
 from app.services.map_generator import generate_map
 from app.services.resource_service import create_player_resources
 from app.services.turn_engine import initialize_turn_state
+from app.services.ship_service import initialize_blueprints, place_starting_ships
 
 
 async def create_game(db: AsyncSession, name: str, max_players: int, host: User) -> Game:
@@ -132,6 +133,11 @@ async def start_game(db: AsyncSession, game: Game, user: User) -> Game:
     # Allocate starting resources per species
     for player in players:
         await create_player_resources(player, db)
+
+    # Initialize ship blueprints and place starting ships per species
+    for player in players:
+        await initialize_blueprints(player, db)
+        await place_starting_ships(player, game.id, db)
 
     await db.commit()
     await db.refresh(game)
