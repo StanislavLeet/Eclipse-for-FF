@@ -269,14 +269,14 @@ with email notifications. Private use among friends and family.
 - Create: `app/tasks/email_sender.py`
 - Modify: `app/services/turn_engine.py`
 
-- [ ] Configure email sending (SMTP or SendGrid via config)
-- [ ] Send notification email when it becomes a player's turn: include game name, round, what phase, link to game
-- [ ] Send notification email when game starts (invite accepted + game launched)
-- [ ] Send notification email when game ends (winner announced)
-- [ ] Implement email queue/retry (simple: direct send with error logging, no external queue needed for personal use scale)
-- [ ] Implement `GET /games/{id}/status` for players to check game state without email
-- [ ] Write tests: notification is triggered on turn change, email content contains game link
-- [ ] Run test suite - must pass before task 15
+- [x] Configure email sending (SMTP or SendGrid via config)
+- [x] Send notification email when it becomes a player's turn: include game name, round, what phase, link to game
+- [x] Send notification email when game starts (invite accepted + game launched)
+- [x] Send notification email when game ends (winner announced)
+- [x] Implement email queue/retry (simple: direct send with error logging, no external queue needed for personal use scale)
+- [x] Implement `GET /games/{id}/status` for players to check game state without email
+- [x] Write tests: notification is triggered on turn change, email content contains game link
+- [x] Run test suite - must pass before task 15
 
 ### Task 15: Victory Points & End Game
 

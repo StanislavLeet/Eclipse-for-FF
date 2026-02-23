@@ -145,4 +145,9 @@ async def start_game(db: AsyncSession, game: Game, user: User) -> Game:
 
     await db.commit()
     await db.refresh(game)
+
+    # Notify all players that the game has started (best-effort)
+    from app.services.notification_service import notify_game_started
+    await notify_game_started(db, game, players)
+
     return game

@@ -173,6 +173,13 @@ async def submit_action(
 
     await db.commit()
     await db.refresh(action)
+
+    # Notify the next active player (best-effort; errors are logged, not raised)
+    next_active = await get_active_player(db, game.id)
+    if next_active:
+        from app.services.notification_service import notify_turn_change
+        await notify_turn_change(db, game, next_active)
+
     return action
 
 
@@ -250,4 +257,11 @@ async def advance_phase(db: AsyncSession, game: Game) -> Game:
     await _transition_phase(db, game, players)
     await db.commit()
     await db.refresh(game)
+
+    # Notify the next active player after a manual phase advance (best-effort)
+    next_active = await get_active_player(db, game.id)
+    if next_active:
+        from app.services.notification_service import notify_turn_change
+        await notify_turn_change(db, game, next_active)
+
     return game

@@ -100,6 +100,19 @@ class ShipOnTileResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class GameStatusResponse(BaseModel):
+    """Lightweight game status for polling without fetching the full map."""
+
+    id: int
+    name: str
+    status: GameStatus
+    current_round: int
+    current_phase: Optional[GamePhase]
+    active_player_id: Optional[int]
+
+    model_config = {"from_attributes": True}
+
+
 class HexTileResponse(BaseModel):
     id: int
     game_id: int

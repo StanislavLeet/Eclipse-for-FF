@@ -9,6 +9,7 @@ from app.models.user import User
 from app.schemas.game import (
     GameCreate,
     GameResponse,
+    GameStatusResponse,
     HexTileResponse,
     InviteCreate,
     InviteResponse,
@@ -160,6 +161,26 @@ async def start_game_endpoint(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     players = await get_players_for_game(db, game.id)
     return _game_response(game, players)
+
+
+@router.get("/{game_id}/status", response_model=GameStatusResponse)
+async def get_game_status(
+    game_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Return a lightweight game status summary for polling."""
+    game = await _get_game_or_404(db, game_id)
+    players = await get_players_for_game(db, game.id)
+    active_player = next((p for p in players if p.is_active_turn), None)
+    return GameStatusResponse(
+        id=game.id,
+        name=game.name,
+        status=game.status,
+        current_round=game.current_round,
+        current_phase=game.current_phase,
+        active_player_id=active_player.id if active_player else None,
+    )
 
 
 @router.get("/{game_id}/map", response_model=list[HexTileResponse])
