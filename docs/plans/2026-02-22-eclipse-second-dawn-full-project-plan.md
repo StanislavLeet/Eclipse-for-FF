@@ -111,14 +111,14 @@ with email notifications. Private use among friends and family.
 - Create: `app/services/map_generator.py`
 - Create: `alembic/versions/003_map_schema.py`
 
-- [ ] Define `HexTile` model: id, game_id, q, r (axial coords), tile_type, is_explored, owner_player_id
-- [ ] Define `System` model: id, hex_tile_id, name, planets (JSON), wormholes (JSON), ancient_ships_count, discovery_tile_id
-- [ ] Encode all real Eclipse system tiles as static data (tile ID, planets with hex types, wormholes, starting resources)
-- [ ] Implement hex grid layout algorithm (axial coordinate system, ring-based layout for 2-6 players)
-- [ ] Implement map generator: place Galactic Center (tile 001), distribute system tiles by ring, place homeworld tiles for each player at correct positions
-- [ ] Implement wormhole connection validation (wormhole exits must align between adjacent tiles)
-- [ ] Write tests: map generation for 2/3/4/5/6 players, wormhole alignment, homeworld placement
-- [ ] Run test suite - must pass before task 6
+- [x] Define `HexTile` model: id, game_id, q, r (axial coords), tile_type, is_explored, owner_player_id
+- [x] Define `System` model: id, hex_tile_id, name, planets (JSON), wormholes (JSON), ancient_ships_count, discovery_tile_id
+- [x] Encode all real Eclipse system tiles as static data (tile ID, planets with hex types, wormholes, starting resources)
+- [x] Implement hex grid layout algorithm (axial coordinate system, ring-based layout for 2-6 players)
+- [x] Implement map generator: place Galactic Center (tile 001), distribute system tiles by ring, place homeworld tiles for each player at correct positions
+- [x] Implement wormhole connection validation (wormhole exits must align between adjacent tiles)
+- [x] Write tests: map generation for 2/3/4/5/6 players, wormhole alignment, homeworld placement
+- [x] Run test suite - must pass before task 6
 
 ### Task 6: Core Game State & Turn Engine
 

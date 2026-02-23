@@ -7,6 +7,7 @@ from app.models.game import Game, GameStatus
 from app.models.game_invite import GameInvite
 from app.models.player import Player, Species
 from app.models.user import User
+from app.services.map_generator import generate_map
 
 
 async def create_game(db: AsyncSession, name: str, max_players: int, host: User) -> Game:
@@ -118,6 +119,11 @@ async def start_game(db: AsyncSession, game: Game, user: User) -> Game:
 
     game.status = GameStatus.active
     game.current_round = 1
+    await db.flush()
+
+    # Generate the galaxy map
+    await generate_map(db, game_id=game.id, players=players)
+
     await db.commit()
     await db.refresh(game)
     return game

@@ -9,12 +9,14 @@ from app.models.user import User
 from app.schemas.game import (
     GameCreate,
     GameResponse,
+    HexTileResponse,
     InviteCreate,
     InviteResponse,
     JoinGame,
     PlayerResponse,
     SelectSpecies,
     SpeciesInfo,
+    SystemResponse,
 )
 from app.services.game_service import (
     create_game,
@@ -25,6 +27,7 @@ from app.services.game_service import (
     select_species,
     start_game,
 )
+from app.services.map_generator import get_map_tiles, get_system_for_tile
 
 router = APIRouter(prefix="/games", tags=["games"])
 
@@ -155,3 +158,39 @@ async def start_game_endpoint(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     players = await get_players_for_game(db, game.id)
     return _game_response(game, players)
+
+
+@router.get("/{game_id}/map", response_model=list[HexTileResponse])
+async def get_game_map(
+    game_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    game = await _get_game_or_404(db, game_id)
+    if game.status == GameStatus.lobby:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Map is not available until the game has started",
+        )
+    tiles = await get_map_tiles(db, game_id)
+    result: list[HexTileResponse] = []
+    for tile in tiles:
+        system = await get_system_for_tile(db, tile.id)
+        system_resp: SystemResponse | None = None
+        if system is not None:
+            system_resp = SystemResponse.model_validate(system)
+        result.append(
+            HexTileResponse(
+                id=tile.id,
+                game_id=tile.game_id,
+                q=tile.q,
+                r=tile.r,
+                tile_type=tile.tile_type,
+                tile_template_id=tile.tile_template_id,
+                rotation=tile.rotation,
+                is_explored=tile.is_explored,
+                owner_player_id=tile.owner_player_id,
+                system=system_resp,
+            )
+        )
+    return result

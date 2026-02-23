@@ -1,9 +1,10 @@
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, EmailStr, field_validator
 
 from app.models.game import GamePhase, GameStatus
+from app.models.hex_tile import TileType
 from app.models.player import Species
 
 
@@ -76,3 +77,29 @@ class SpeciesInfo(BaseModel):
     homeworld_slots: list[str]
     starting_ships: dict[str, int]
     special_ability: str
+
+
+class SystemResponse(BaseModel):
+    id: int
+    name: Optional[str]
+    planets: Optional[list[Any]]
+    wormholes: Optional[list[int]]
+    ancient_ships_count: int
+    discovery_tile_id: Optional[int]
+
+    model_config = {"from_attributes": True}
+
+
+class HexTileResponse(BaseModel):
+    id: int
+    game_id: int
+    q: int
+    r: int
+    tile_type: TileType
+    tile_template_id: Optional[str]
+    rotation: int
+    is_explored: bool
+    owner_player_id: Optional[int]
+    system: Optional[SystemResponse] = None
+
+    model_config = {"from_attributes": True}
