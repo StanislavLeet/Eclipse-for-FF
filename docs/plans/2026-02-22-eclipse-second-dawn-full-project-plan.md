@@ -145,14 +145,14 @@ with email notifications. Private use among friends and family.
 - Create: `app/services/resource_service.py`
 - Modify: `app/services/turn_engine.py`
 
-- [ ] Define `PlayerResources` model: player_id, money, science, materials, population_cubes (by type: orbital, advanced, Gauss), tradespheres
-- [ ] Implement starting resource allocation per species on game start
-- [ ] Implement influence track (11 influence discs per player, placed on action tiles and colony hexes)
-- [ ] Implement upkeep calculation: sum colony income + trade + modifiers, deduct influence costs, handle bankruptcy (discard colony if can't pay)
-- [ ] Implement spending validation on actions (e.g. BUILD costs materials, RESEARCH costs science)
-- [ ] Implement `GET /games/{id}/players/{id}/resources`
-- [ ] Write tests: upkeep calculation, bankruptcy, species-specific starting resources, spending validation
-- [ ] Run test suite - must pass before task 8
+- [x] Define `PlayerResources` model: player_id, money, science, materials, population_cubes (by type: orbital, advanced, Gauss), tradespheres
+- [x] Implement starting resource allocation per species on game start
+- [x] Implement influence track (11 influence discs per player, placed on action tiles and colony hexes)
+- [x] Implement upkeep calculation: sum colony income + trade + modifiers, deduct influence costs, handle bankruptcy (discard colony if can't pay)
+- [x] Implement spending validation on actions (e.g. BUILD costs materials, RESEARCH costs science)
+- [x] Implement `GET /games/{id}/players/{id}/resources`
+- [x] Write tests: upkeep calculation, bankruptcy, species-specific starting resources, spending validation
+- [x] Run test suite - must pass before task 8
 
 ### Task 8: Technology Research Tree
 

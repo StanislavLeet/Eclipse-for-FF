@@ -5,8 +5,9 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.game import GameStatus
 from app.models.user import User
-from app.schemas.turn import ActionRequest, ActionResponse
-from app.services.game_service import get_game, get_player_in_game
+from app.schemas.turn import ActionRequest, ActionResponse, PlayerResourceResponse
+from app.services.game_service import get_game, get_player_in_game, get_players_for_game
+from app.services.resource_service import get_player_resources
 from app.services.turn_engine import advance_phase, get_game_actions, submit_action
 
 router = APIRouter(prefix="/games", tags=["turns"])
@@ -87,3 +88,48 @@ async def advance_game_phase(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     return {"current_phase": game.current_phase, "current_round": game.current_round}
+
+
+@router.get(
+    "/{game_id}/players/{player_id}/resources",
+    response_model=PlayerResourceResponse,
+)
+async def get_player_resources_endpoint(
+    game_id: int,
+    player_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Return the current resource state for a player in a game."""
+    game = await _get_active_game_or_404(db, game_id)
+    if game.status == GameStatus.lobby:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Game has not started yet",
+        )
+
+    players = await get_players_for_game(db, game_id)
+    player = next((p for p in players if p.id == player_id), None)
+    if player is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Player not found in this game",
+        )
+
+    resources = await get_player_resources(player_id, db)
+    if resources is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Resources not found for player",
+        )
+
+    return {
+        "player_id": resources.player_id,
+        "money": resources.money,
+        "science": resources.science,
+        "materials": resources.materials,
+        "population_cubes": resources.population_cubes,
+        "tradespheres": resources.tradespheres,
+        "influence_discs_total": resources.influence_discs_total,
+        "influence_discs_used": resources.influence_discs_used,
+    }

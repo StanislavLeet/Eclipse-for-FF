@@ -6,6 +6,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.game import Game, GamePhase, GameStatus
 from app.models.game_action import ActionType, GameAction
 from app.models.player import Player
+from app.services.resource_service import (
+    apply_upkeep_for_game,
+    use_influence_disc,
+    validate_and_deduct_build_cost,
+    validate_and_deduct_research_cost,
+)
 
 
 async def get_active_player(db: AsyncSession, game_id: int) -> Player | None:
@@ -70,6 +76,17 @@ async def submit_action(
     """Record an action, update turn state, and trigger phase transitions if needed."""
     await validate_action(game, player, action_type)
 
+    # Non-pass actions consume one influence disc from the player's supply
+    if action_type != ActionType.pass_action:
+        await use_influence_disc(player.id, db)
+
+    # Spending validation for specific action types
+    if action_type == ActionType.build and payload and "ship_type" in payload:
+        await validate_and_deduct_build_cost(player.id, payload["ship_type"], db)
+
+    if action_type == ActionType.research and payload and "science_cost" in payload:
+        await validate_and_deduct_research_cost(player.id, payload["science_cost"], db)
+
     action = GameAction(
         game_id=game.id,
         player_id=player.id,
@@ -128,6 +145,9 @@ async def _transition_phase(
     elif game.current_phase == GamePhase.combat:
         game.current_phase = GamePhase.upkeep
     elif game.current_phase == GamePhase.upkeep:
+        # Apply upkeep (income, influence costs, bankruptcy) for all players
+        await apply_upkeep_for_game([p.id for p in players], db)
+
         # Start a new round
         game.current_round += 1
         game.current_phase = GamePhase.activation

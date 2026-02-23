@@ -8,6 +8,7 @@ from app.models.game_invite import GameInvite
 from app.models.player import Player, Species
 from app.models.user import User
 from app.services.map_generator import generate_map
+from app.services.resource_service import create_player_resources
 from app.services.turn_engine import initialize_turn_state
 
 
@@ -127,6 +128,10 @@ async def start_game(db: AsyncSession, game: Game, user: User) -> Game:
 
     # Initialize turn state (set active player, phase)
     await initialize_turn_state(db, game)
+
+    # Allocate starting resources per species
+    for player in players:
+        await create_player_resources(player, db)
 
     await db.commit()
     await db.refresh(game)
