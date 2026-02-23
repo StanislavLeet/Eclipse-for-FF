@@ -142,6 +142,19 @@ async def submit_action(
             game_id=game.id,
             player_id=player.id,
             hex_tile_id=payload["hex_tile_id"],
+            planet_slot=payload.get("planet_slot"),
+        )
+
+    if action_type == ActionType.colonize:
+        if not payload or "hex_tile_id" not in payload or "planet_slot" not in payload:
+            raise ValueError("COLONIZE action requires 'hex_tile_id' and 'planet_slot' in payload")
+        from app.services.colony_service import execute_colonize
+        await execute_colonize(
+            db=db,
+            game_id=game.id,
+            player_id=player.id,
+            hex_tile_id=payload["hex_tile_id"],
+            planet_slot=payload["planet_slot"],
         )
 
     action = GameAction(

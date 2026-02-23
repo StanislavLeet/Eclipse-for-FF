@@ -216,15 +216,15 @@ with email notifications. Private use among friends and family.
 - Create: `app/services/colony_service.py`
 - Modify: `app/routers/turns.py`
 
-- [ ] Define `PlanetPopulation` model: id, hex_tile_id, planet_slot, population_type (orbital/advanced/Gauss), owner_player_id
-- [ ] Implement colony ship build + movement (colony ships are consumed on colonization)
-- [ ] Implement colonization action: place population cube on planet slot, validate cube type matches planet type (Money/Science/Materials)
-- [ ] Implement population growth (INFLUENCE action can also upgrade population track)
-- [ ] Enforce max population per hex based on planet slots
-- [ ] Calculate colony income contribution during upkeep
-- [ ] Handle population removal during combat (attacker may place their population)
-- [ ] Write tests: colonization validation, income calculation, population limits
-- [ ] Run test suite - must pass before task 12
+- [x] Define `PlanetPopulation` model: id, hex_tile_id, planet_slot, population_type (orbital/advanced/Gauss), owner_player_id
+- [x] Implement colony ship build + movement (colony ships are consumed on colonization)
+- [x] Implement colonization action: place population cube on planet slot, validate cube type matches planet type (Money/Science/Materials)
+- [x] Implement population growth (INFLUENCE action can also upgrade population track)
+- [x] Enforce max population per hex based on planet slots
+- [x] Calculate colony income contribution during upkeep
+- [x] Handle population removal during combat (attacker may place their population)
+- [x] Write tests: colonization validation, income calculation, population limits
+- [x] Run test suite - must pass before task 12
 
 ### Task 12: Combat System
 

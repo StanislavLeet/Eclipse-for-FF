@@ -358,14 +358,19 @@ async def execute_influence(
     game_id: int,
     player_id: int,
     hex_tile_id: int,
+    planet_slot: int | None = None,
 ) -> dict:
-    """Execute an INFLUENCE action: claim an explored, unowned hex.
+    """Execute an INFLUENCE action.
 
-    The player must have at least one ship on the target hex.
+    Two modes:
+    1. Claim mode (planet_slot is None): claim an explored, unowned hex.
+       The player must have at least one ship on the target hex.
+    2. Population growth mode (planet_slot is not None): place a population
+       cube on an already-owned hex without a colony ship.  This represents
+       growing the colony via administrative influence.
+
     The influence disc for the action tile is already consumed by the turn
-    engine; no additional disc is needed here (the action tile disc *is* the
-    influence being placed on the system in the abstract — Eclipse's rule is
-    that placing a disc on the action tile == using an influence action).
+    engine before this function is called.
 
     Returns a summary dict.
     Raises ValueError on any validation failure.
@@ -378,6 +383,19 @@ async def execute_influence(
         raise ValueError(f"Hex tile {hex_tile_id} does not belong to this game")
     if not hex_tile.is_explored:
         raise ValueError(f"Hex {hex_tile_id} has not been explored yet")
+
+    # Population growth mode: place a cube on an owned hex
+    if planet_slot is not None:
+        from app.services.colony_service import execute_population_growth
+        return await execute_population_growth(
+            db=db,
+            game_id=game_id,
+            player_id=player_id,
+            hex_tile_id=hex_tile_id,
+            planet_slot=planet_slot,
+        )
+
+    # Claim mode: take ownership of an unowned hex
     if hex_tile.owner_player_id is not None:
         raise ValueError(
             f"Hex {hex_tile_id} is already claimed by player {hex_tile.owner_player_id}"

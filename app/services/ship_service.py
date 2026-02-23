@@ -199,8 +199,25 @@ async def build_ship(
     validate_and_deduct_build_cost before this function is called.
 
     Raises ValueError if the ship type is unknown or the blueprint is invalid.
+    Colony ships are handled as a special case: no blueprint is required.
     """
     ship_type = ship_type.lower()
+
+    # Colony ships have no blueprint; handle them as a special case.
+    if ship_type == "colony_ship":
+        homeworld_hex_id = await find_player_homeworld(player_id, game_id, db)
+        ship = Ship(
+            game_id=game_id,
+            player_id=player_id,
+            ship_type="colony_ship",
+            hex_tile_id=homeworld_hex_id,
+            hp_remaining=1,
+            is_ancient=False,
+        )
+        db.add(ship)
+        await db.flush()
+        return ship
+
     try:
         st = get_ship_type(ship_type)
     except KeyError as exc:

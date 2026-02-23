@@ -13,6 +13,7 @@ BUILD_COSTS: dict[str, int] = {
     "cruiser": 5,
     "dreadnought": 8,
     "starbase": 3,
+    "colony_ship": 2,
 }
 
 
@@ -99,27 +100,34 @@ async def perform_upkeep_for_player(player_id: int, db: AsyncSession) -> dict:
     """Apply upkeep for a single player.
 
     Steps:
-    1. Add income: tradespheres (1 money each) + colony income (Task 11)
-    2. Deduct influence costs for colony hexes at 1 money each (Task 11)
+    1. Add income: tradespheres (1 money each) + colony planet income
+    2. Deduct influence costs for colony hexes at 1 money each
     3. Handle bankruptcy: remove colony hexes if player cannot pay
     4. Return action-tile influence discs to player's supply
     """
+    from app.services.colony_service import (
+        calculate_colony_income,
+        count_colony_discs_for_player,
+        remove_one_colony_for_bankruptcy,
+    )
+
     resources = await get_player_resources(player_id, db)
     if resources is None:
         return {}
 
-    # Income sources
-    money_income = resources.tradespheres  # 1 money per tradesphere
-    science_income = 0   # from colony science planets (added in Task 11)
-    materials_income = 0  # from colony materials planets (added in Task 11)
+    # Colony income from placed population cubes
+    colony_income = await calculate_colony_income(db, player_id)
+
+    money_income = resources.tradespheres + colony_income["money"]
+    science_income = colony_income["science"]
+    materials_income = colony_income["materials"]
 
     resources.money += money_income
     resources.science += science_income
     resources.materials += materials_income
 
-    # Influence cost: 1 money per colony hex disc.
-    # Colony discs will be tracked in Task 11; for now cost is 0.
-    colony_disc_count = 0  # TODO Task 11: count colony discs for this player
+    # Influence cost: 1 money per owned hex (influence disc on the board)
+    colony_disc_count = await count_colony_discs_for_player(db, player_id)
     influence_cost = colony_disc_count
 
     bankrupt = False
@@ -128,16 +136,21 @@ async def perform_upkeep_for_player(player_id: int, db: AsyncSession) -> dict:
     if resources.money >= influence_cost:
         resources.money -= influence_cost
     else:
-        # Bankruptcy: pay what we can, remove colony hexes until solvent
+        # Bankruptcy: remove colony hexes until the player can afford the remainder
         shortage = influence_cost - resources.money
         resources.money = 0
         bankrupt = True
-        discs_removed = shortage
-        colony_disc_count -= discs_removed
+        for _ in range(shortage):
+            removed = await remove_one_colony_for_bankruptcy(db, player_id)
+            if not removed:
+                break
+            discs_removed += 1
 
-    # Return action-tile discs (free at end of upkeep).
-    # Colony discs stay; for now all discs_used are action discs, so reset to colony count.
-    resources.influence_discs_used = colony_disc_count  # = 0 while no colonies exist
+        # Recalculate remaining colony disc count after bankruptcy removals
+        colony_disc_count = await count_colony_discs_for_player(db, player_id)
+
+    # Return action-tile discs to the supply; colony hex discs remain on the board.
+    resources.influence_discs_used = colony_disc_count
 
     await db.flush()
     return {

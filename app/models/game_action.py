@@ -15,6 +15,7 @@ class ActionType(str, enum.Enum):
     research = "research"
     move = "move"
     upgrade = "upgrade"
+    colonize = "colonize"
     pass_action = "pass"
 
 
