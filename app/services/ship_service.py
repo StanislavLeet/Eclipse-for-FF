@@ -249,6 +249,14 @@ async def get_ships_for_player(player_id: int, game_id: int, db: AsyncSession) -
     return list(result.scalars().all())
 
 
+async def get_ships_for_tile(hex_tile_id: int, db: AsyncSession) -> list[Ship]:
+    """Return all ships currently on a specific hex tile."""
+    result = await db.execute(
+        select(Ship).where(Ship.hex_tile_id == hex_tile_id)
+    )
+    return list(result.scalars().all())
+
+
 # ---------------------------------------------------------------------------
 # Starting ship placement
 # ---------------------------------------------------------------------------

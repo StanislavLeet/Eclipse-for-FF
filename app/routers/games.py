@@ -15,6 +15,7 @@ from app.schemas.game import (
     JoinGame,
     PlayerResponse,
     SelectSpecies,
+    ShipOnTileResponse,
     SpeciesInfo,
     SystemResponse,
 )
@@ -28,6 +29,7 @@ from app.services.game_service import (
     start_game,
 )
 from app.services.map_generator import get_map_tiles, get_system_for_tile
+from app.services.ship_service import get_ships_for_tile
 
 router = APIRouter(prefix="/games", tags=["games"])
 
@@ -179,6 +181,8 @@ async def get_game_map(
         system_resp: SystemResponse | None = None
         if system is not None:
             system_resp = SystemResponse.model_validate(system)
+        ships = await get_ships_for_tile(tile.id, db)
+        ships_resp = [ShipOnTileResponse.model_validate(s) for s in ships]
         result.append(
             HexTileResponse(
                 id=tile.id,
@@ -191,6 +195,7 @@ async def get_game_map(
                 is_explored=tile.is_explored,
                 owner_player_id=tile.owner_player_id,
                 system=system_resp,
+                ships=ships_resp,
             )
         )
     return result

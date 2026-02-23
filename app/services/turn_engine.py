@@ -109,6 +109,41 @@ async def submit_action(
             db=db,
         )
 
+    if action_type == ActionType.move:
+        if not payload or "ship_id" not in payload or "path" not in payload:
+            raise ValueError("MOVE action requires 'ship_id' and 'path' in payload")
+        from app.services.movement_service import validate_and_execute_move
+        await validate_and_execute_move(
+            db=db,
+            game_id=game.id,
+            player_id=player.id,
+            ship_id=payload["ship_id"],
+            path_hex_ids=payload["path"],
+        )
+
+    if action_type == ActionType.explore:
+        if not payload or "ship_id" not in payload or "target_hex_id" not in payload:
+            raise ValueError("EXPLORE action requires 'ship_id' and 'target_hex_id' in payload")
+        from app.services.exploration_service import execute_explore
+        await execute_explore(
+            db=db,
+            game_id=game.id,
+            player_id=player.id,
+            ship_id=payload["ship_id"],
+            target_hex_id=payload["target_hex_id"],
+        )
+
+    if action_type == ActionType.influence:
+        if not payload or "hex_tile_id" not in payload:
+            raise ValueError("INFLUENCE action requires 'hex_tile_id' in payload")
+        from app.services.exploration_service import execute_influence
+        await execute_influence(
+            db=db,
+            game_id=game.id,
+            player_id=player.id,
+            hex_tile_id=payload["hex_tile_id"],
+        )
+
     action = GameAction(
         game_id=game.id,
         player_id=player.id,

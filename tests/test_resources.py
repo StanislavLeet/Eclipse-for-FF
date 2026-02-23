@@ -202,10 +202,16 @@ class TestInfluenceDiscs:
         game_id = game["id"]
         host_player = next(p for p in game["players"] if p["turn_order"] == 0)
 
-        # Player 0 takes an EXPLORE action
+        # Player 0 takes an UPGRADE action (no resource cost, just modifies blueprint)
         resp = await db_client.post(
             f"/games/{game_id}/action",
-            json={"action_type": "explore"},
+            json={
+                "action_type": "upgrade",
+                "payload": {
+                    "ship_type": "interceptor",
+                    "slots": ["nuclear_source", "electron_cannon", "electron_drive", None],
+                },
+            },
             headers=auth_headers(tokens[0]),
         )
         assert resp.status_code == 201
@@ -241,17 +247,26 @@ class TestInfluenceDiscs:
         # Player 0 acts, player 1 acts, player 0 acts again (3 total, but p0 acts twice)
         await db_client.post(
             f"/games/{game_id}/action",
-            json={"action_type": "explore"},
+            json={
+                "action_type": "upgrade",
+                "payload": {"ship_type": "interceptor", "slots": ["nuclear_source", "electron_cannon", "electron_drive", None]},
+            },
             headers=auth_headers(tokens[0]),
         )
         await db_client.post(
             f"/games/{game_id}/action",
-            json={"action_type": "explore"},
+            json={
+                "action_type": "upgrade",
+                "payload": {"ship_type": "interceptor", "slots": ["nuclear_source", "electron_cannon", "electron_drive", None]},
+            },
             headers=auth_headers(tokens[1]),
         )
         await db_client.post(
             f"/games/{game_id}/action",
-            json={"action_type": "move"},
+            json={
+                "action_type": "upgrade",
+                "payload": {"ship_type": "cruiser", "slots": ["nuclear_source", "electron_cannon", "electron_cannon", "electron_drive", None, None]},
+            },
             headers=auth_headers(tokens[0]),
         )
 
@@ -266,7 +281,10 @@ class TestInfluenceDiscs:
         # Player 0 uses a disc, then both players pass to enter combat
         await db_client.post(
             f"/games/{game_id}/action",
-            json={"action_type": "explore"},
+            json={
+                "action_type": "upgrade",
+                "payload": {"ship_type": "interceptor", "slots": ["nuclear_source", "electron_cannon", "electron_drive", None]},
+            },
             headers=auth_headers(tokens[0]),
         )
         # Player 1's turn; player 1 passes

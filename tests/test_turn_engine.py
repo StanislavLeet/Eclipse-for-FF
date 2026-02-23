@@ -88,10 +88,13 @@ class TestTurnOrder:
         tokens, game = await setup_started_game(db_client, num_players=2)
         game_id = game["id"]
 
-        # First player submits an action (explore)
+        # First player submits an action (upgrade — no resource cost)
         resp = await db_client.post(
             f"/games/{game_id}/action",
-            json={"action_type": "explore"},
+            json={
+                "action_type": "upgrade",
+                "payload": {"ship_type": "interceptor", "slots": ["nuclear_source", "electron_cannon", "electron_drive", None]},
+            },
             headers=auth_headers(tokens[0]),
         )
         assert resp.status_code == 201
@@ -110,7 +113,10 @@ class TestTurnOrder:
         # Second player (turn_order=1) tries to act first — should fail
         resp = await db_client.post(
             f"/games/{game_id}/action",
-            json={"action_type": "explore"},
+            json={
+                "action_type": "upgrade",
+                "payload": {"ship_type": "interceptor", "slots": ["nuclear_source", "electron_cannon", "electron_drive", None]},
+            },
             headers=auth_headers(tokens[1]),
         )
         assert resp.status_code == 400
@@ -124,7 +130,10 @@ class TestTurnOrder:
         outsider_token = await register_and_login(db_client, "outsider@example.com", "outsider")
         resp = await db_client.post(
             f"/games/{game_id}/action",
-            json={"action_type": "explore"},
+            json={
+                "action_type": "upgrade",
+                "payload": {"ship_type": "interceptor", "slots": ["nuclear_source", "electron_cannon", "electron_drive", None]},
+            },
             headers=auth_headers(outsider_token),
         )
         assert resp.status_code == 403
@@ -223,7 +232,10 @@ class TestPassAndPhaseTransition:
         # Actually after player 0 passes, player 1 is active. Player 1 acts.
         await db_client.post(
             f"/games/{game_id}/action",
-            json={"action_type": "explore"},
+            json={
+                "action_type": "upgrade",
+                "payload": {"ship_type": "interceptor", "slots": ["nuclear_source", "electron_cannon", "electron_drive", None]},
+            },
             headers=auth_headers(tokens[1]),
         )
 
@@ -232,7 +244,7 @@ class TestPassAndPhaseTransition:
         # Player 0 tries to act - should fail (has passed)
         resp = await db_client.post(
             f"/games/{game_id}/action",
-            json={"action_type": "explore"},
+            json={"action_type": "pass"},
             headers=auth_headers(tokens[0]),
         )
         assert resp.status_code == 400
@@ -290,12 +302,15 @@ class TestActionHistory:
         # Submit a couple of actions
         await db_client.post(
             f"/games/{game_id}/action",
-            json={"action_type": "explore"},
+            json={
+                "action_type": "upgrade",
+                "payload": {"ship_type": "interceptor", "slots": ["nuclear_source", "electron_cannon", "electron_drive", None]},
+            },
             headers=auth_headers(tokens[0]),
         )
         await db_client.post(
             f"/games/{game_id}/action",
-            json={"action_type": "build"},
+            json={"action_type": "pass"},
             headers=auth_headers(tokens[1]),
         )
 
@@ -306,8 +321,8 @@ class TestActionHistory:
         assert resp.status_code == 200
         actions = resp.json()
         assert len(actions) == 2
-        assert actions[0]["action_type"] == "explore"
-        assert actions[1]["action_type"] == "build"
+        assert actions[0]["action_type"] == "upgrade"
+        assert actions[1]["action_type"] == "pass"
 
     async def test_action_has_correct_fields(self, db_client: AsyncClient):
         tokens, game = await setup_started_game(db_client, num_players=2)
@@ -357,10 +372,13 @@ class TestThreePlayerTurnRotation:
             assert len(active) == 1
             assert active[0]["turn_order"] == expected_turn
 
-            # Submit explore action
+            # Submit upgrade action (no resource cost, works for all species)
             resp = await db_client.post(
                 f"/games/{game_id}/action",
-                json={"action_type": "explore"},
+                json={
+                    "action_type": "upgrade",
+                    "payload": {"ship_type": "interceptor", "slots": ["nuclear_source", "electron_cannon", "electron_drive", None]},
+                },
                 headers=auth_headers(tokens[expected_turn]),
             )
             assert resp.status_code == 201

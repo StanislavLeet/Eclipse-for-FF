@@ -200,14 +200,14 @@ with email notifications. Private use among friends and family.
 - Create: `app/models/discovery_tile.py`
 - Modify: `app/routers/turns.py`
 
-- [ ] Define discovery tiles as static data (positive: resources/tech/ships, negative: nothing)
-- [ ] Implement MOVE action: validate path through connected hexes (wormholes or adjacent), validate drive count vs hexes moved, move ship models in DB
-- [ ] Implement hex ownership (INFLUENCE action: place influence disc on explored system)
-- [ ] Implement EXPLORE action: reveal unexplored tile when ship enters, draw discovery tile, apply discovery effect, validate player can afford to keep influence disc or must retreat
-- [ ] Handle ancient ship encounters during exploration (place ancient ships if tile has them)
-- [ ] Implement `GET /games/{id}/map` returning all hex tiles with their state
-- [ ] Write tests: movement path validation, exploration reveal, discovery tile draw, ancient ship placement
-- [ ] Run test suite - must pass before task 11
+- [x] Define discovery tiles as static data (positive: resources/tech/ships, negative: nothing)
+- [x] Implement MOVE action: validate path through connected hexes (wormholes or adjacent), validate drive count vs hexes moved, move ship models in DB
+- [x] Implement hex ownership (INFLUENCE action: place influence disc on explored system)
+- [x] Implement EXPLORE action: reveal unexplored tile when ship enters, draw discovery tile, apply discovery effect, validate player can afford to keep influence disc or must retreat
+- [x] Handle ancient ship encounters during exploration (place ancient ships if tile has them)
+- [x] Implement `GET /games/{id}/map` returning all hex tiles with their state
+- [x] Write tests: movement path validation, exploration reveal, discovery tile draw, ancient ship placement
+- [x] Run test suite - must pass before task 11
 
 ### Task 11: Colonization & Population Management
 

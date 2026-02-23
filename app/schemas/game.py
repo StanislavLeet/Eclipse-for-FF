@@ -90,6 +90,16 @@ class SystemResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class ShipOnTileResponse(BaseModel):
+    id: int
+    ship_type: str
+    player_id: Optional[int]
+    hp_remaining: int
+    is_ancient: bool
+
+    model_config = {"from_attributes": True}
+
+
 class HexTileResponse(BaseModel):
     id: int
     game_id: int
@@ -101,5 +111,6 @@ class HexTileResponse(BaseModel):
     is_explored: bool
     owner_player_id: Optional[int]
     system: Optional[SystemResponse] = None
+    ships: list[ShipOnTileResponse] = []
 
     model_config = {"from_attributes": True}

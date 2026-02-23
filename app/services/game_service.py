@@ -7,6 +7,7 @@ from app.models.game import Game, GameStatus
 from app.models.game_invite import GameInvite
 from app.models.player import Player, Species
 from app.models.user import User
+from app.services.exploration_service import initialize_discovery_deck
 from app.services.map_generator import generate_map
 from app.services.resource_service import create_player_resources
 from app.services.turn_engine import initialize_turn_state
@@ -138,6 +139,9 @@ async def start_game(db: AsyncSession, game: Game, user: User) -> Game:
     for player in players:
         await initialize_blueprints(player, db)
         await place_starting_ships(player, game.id, db)
+
+    # Initialize the discovery tile deck (shuffled)
+    await initialize_discovery_deck(db, game.id)
 
     await db.commit()
     await db.refresh(game)
