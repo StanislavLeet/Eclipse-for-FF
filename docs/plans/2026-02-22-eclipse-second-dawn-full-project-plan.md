@@ -233,16 +233,16 @@ with email notifications. Private use among friends and family.
 - Create: `app/models/combat_log.py`
 - Create: `app/routers/combat.py`
 
-- [ ] Define combat sequence: 1) Missiles (if any), 2) Cannons by initiative order, 3) Apply damage, 4) Remove destroyed ships
-- [ ] Implement initiative calculation per ship (base initiative + Computer bonus)
-- [ ] Implement dice rolling: each cannon/missile rolls 1d6 + Computer vs target's Shield value
-- [ ] Implement hit application: reduce ship HP, destroy at 0 (dreadnoughts have 2 HP by default)
-- [ ] Implement retreat option (before combat round, must move to adjacent hex)
-- [ ] Implement combat VP: 1VP per enemy ship destroyed (player ships) or 2VP (ancient/GCDS)
-- [ ] Define `CombatLog` model: id, game_id, hex_tile_id, round_number, attacker_id, log_entries (JSON)
-- [ ] Handle GCDS (Galactic Center Defense System) as special ancient ship
-- [ ] Write tests: initiative ordering, hit calculation, damage application, retreat validation, VP award
-- [ ] Run test suite - must pass before task 13
+- [x] Define combat sequence: 1) Missiles (if any), 2) Cannons by initiative order, 3) Apply damage, 4) Remove destroyed ships
+- [x] Implement initiative calculation per ship (base initiative + Computer bonus)
+- [x] Implement dice rolling: each cannon/missile rolls 1d6 + Computer vs target's Shield value
+- [x] Implement hit application: reduce ship HP, destroy at 0 (dreadnoughts have 2 HP by default)
+- [x] Implement retreat option (before combat round, must move to adjacent hex)
+- [x] Implement combat VP: 1VP per enemy ship destroyed (player ships) or 2VP (ancient/GCDS)
+- [x] Define `CombatLog` model: id, game_id, hex_tile_id, round_number, attacker_id, log_entries (JSON)
+- [x] Handle GCDS (Galactic Center Defense System) as special ancient ship
+- [x] Write tests: initiative ordering, hit calculation, damage application, retreat validation, VP award
+- [x] Run test suite - must pass before task 13
 
 ### Task 13: Galactic Council & Politics
 
