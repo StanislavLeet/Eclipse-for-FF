@@ -162,15 +162,15 @@ with email notifications. Private use among friends and family.
 - Create: `app/services/research_service.py`
 - Create: `app/routers/research.py`
 
-- [ ] Define all Eclipse technologies as static data (6 categories: Military, Grid, Nano, Quantum, Rare-element, Ancient): name, category, cost, prerequisites, effects
-- [ ] Define `PlayerTechnology` model: player_id, tech_id, acquired_round
-- [ ] Implement RESEARCH action validation: player has enough science, prerequisites met, tech not already owned
-- [ ] Implement research cost reduction (each owned tech in same category reduces cost by 1)
-- [ ] Apply tech effects to player state (e.g. Advanced Mining +1 material per advanced square)
-- [ ] Implement `GET /games/{id}/players/{id}/technologies`
-- [ ] Implement `POST /games/{id}/action` RESEARCH sub-handler
-- [ ] Write tests: prerequisite enforcement, cost calculation with reductions, effect application
-- [ ] Run test suite - must pass before task 9
+- [x] Define all Eclipse technologies as static data (6 categories: Military, Grid, Nano, Quantum, Rare-element, Ancient): name, category, cost, prerequisites, effects
+- [x] Define `PlayerTechnology` model: player_id, tech_id, acquired_round
+- [x] Implement RESEARCH action validation: player has enough science, prerequisites met, tech not already owned
+- [x] Implement research cost reduction (each owned tech in same category reduces cost by 1)
+- [x] Apply tech effects to player state (e.g. Advanced Mining +1 material per advanced square)
+- [x] Implement `GET /games/{id}/players/{id}/technologies`
+- [x] Implement `POST /games/{id}/action` RESEARCH sub-handler
+- [x] Write tests: prerequisite enforcement, cost calculation with reductions, effect application
+- [x] Run test suite - must pass before task 9
 
 ### Task 9: Ship System & Blueprints
 

@@ -561,8 +561,8 @@ class TestResearchCost:
         after = await get_resources(db_client, game_id, host_player["id"], tokens[0])
         assert after["science"] == 3  # 6 - 3
 
-    async def test_research_without_science_cost_does_not_deduct(self, db_client: AsyncClient):
-        """Research action without science_cost in payload does not deduct science."""
+    async def test_research_with_only_tech_id_deducts_correct_science(self, db_client: AsyncClient):
+        """Research action with only tech_id deducts the tech's actual science cost."""
         tokens, game = await setup_started_game(
             db_client, num_players=2, species_list=["human", "planta"]
         )
@@ -570,6 +570,7 @@ class TestResearchCost:
         host_player = next(p for p in game["players"] if p["turn_order"] == 0)
 
         before = await get_resources(db_client, game_id, host_player["id"], tokens[0])
+        assert before["science"] == 3  # human starts with 3
 
         resp = await db_client.post(
             f"/games/{game_id}/action",
@@ -579,7 +580,8 @@ class TestResearchCost:
         assert resp.status_code == 201
 
         after = await get_resources(db_client, game_id, host_player["id"], tokens[0])
-        assert after["science"] == before["science"]  # unchanged
+        # advanced_mining base_cost=3, no category discount → deducts 3
+        assert after["science"] == 0
 
 
 # ---------------------------------------------------------------------------

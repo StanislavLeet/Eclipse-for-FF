@@ -10,7 +10,6 @@ from app.services.resource_service import (
     apply_upkeep_for_game,
     use_influence_disc,
     validate_and_deduct_build_cost,
-    validate_and_deduct_research_cost,
 )
 
 
@@ -84,8 +83,16 @@ async def submit_action(
     if action_type == ActionType.build and payload and "ship_type" in payload:
         await validate_and_deduct_build_cost(player.id, payload["ship_type"], db)
 
-    if action_type == ActionType.research and payload and "science_cost" in payload:
-        await validate_and_deduct_research_cost(player.id, payload["science_cost"], db)
+    if action_type == ActionType.research:
+        if not payload or "tech_id" not in payload:
+            raise ValueError("RESEARCH action requires 'tech_id' in payload")
+        from app.services.research_service import apply_research
+        await apply_research(
+            player_id=player.id,
+            tech_id=payload["tech_id"],
+            acquired_round=game.current_round,
+            db=db,
+        )
 
     action = GameAction(
         game_id=game.id,
