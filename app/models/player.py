@@ -27,4 +27,5 @@ class Player(Base):
     species: Mapped[Species | None] = mapped_column(Enum(Species), nullable=True, default=None)
     turn_order: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)
     is_active_turn: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    has_passed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     vp_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

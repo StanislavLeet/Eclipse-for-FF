@@ -8,6 +8,7 @@ from app.models.game_invite import GameInvite
 from app.models.player import Player, Species
 from app.models.user import User
 from app.services.map_generator import generate_map
+from app.services.turn_engine import initialize_turn_state
 
 
 async def create_game(db: AsyncSession, name: str, max_players: int, host: User) -> Game:
@@ -123,6 +124,9 @@ async def start_game(db: AsyncSession, game: Game, user: User) -> Game:
 
     # Generate the galaxy map
     await generate_map(db, game_id=game.id, players=players)
+
+    # Initialize turn state (set active player, phase)
+    await initialize_turn_state(db, game)
 
     await db.commit()
     await db.refresh(game)

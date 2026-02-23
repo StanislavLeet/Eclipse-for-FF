@@ -128,15 +128,15 @@ with email notifications. Private use among friends and family.
 - Create: `app/routers/turns.py`
 - Create: `app/schemas/turn.py`
 
-- [ ] Define game phases enum: STRATEGY, ACTIVATION (with sub-phases), COMBAT, UPKEEP
-- [ ] Define player actions enum: EXPLORE, INFLUENCE, BUILD, RESEARCH, MOVE, UPGRADE, PASS
-- [ ] Define `GameAction` model: id, game_id, player_id, action_type, payload (JSON), timestamp, round_number
-- [ ] Implement turn order enforcement: track who has passed, who is active
-- [ ] Implement `POST /games/{id}/action` (player submits action, validates it is their turn, validates action is legal given game state)
-- [ ] Implement phase transition logic: when all players pass in Activation, move to Combat; after Combat, Upkeep; after Upkeep, new round
-- [ ] Implement action history `GET /games/{id}/actions`
-- [ ] Write tests: turn order, illegal action rejection, phase transitions
-- [ ] Run test suite - must pass before task 7
+- [x] Define game phases enum: STRATEGY, ACTIVATION (with sub-phases), COMBAT, UPKEEP
+- [x] Define player actions enum: EXPLORE, INFLUENCE, BUILD, RESEARCH, MOVE, UPGRADE, PASS
+- [x] Define `GameAction` model: id, game_id, player_id, action_type, payload (JSON), timestamp, round_number
+- [x] Implement turn order enforcement: track who has passed, who is active
+- [x] Implement `POST /games/{id}/action` (player submits action, validates it is their turn, validates action is legal given game state)
+- [x] Implement phase transition logic: when all players pass in Activation, move to Combat; after Combat, Upkeep; after Upkeep, new round
+- [x] Implement action history `GET /games/{id}/actions`
+- [x] Write tests: turn order, illegal action rejection, phase transitions
+- [x] Run test suite - must pass before task 7
 
 ### Task 7: Resource Management
 
