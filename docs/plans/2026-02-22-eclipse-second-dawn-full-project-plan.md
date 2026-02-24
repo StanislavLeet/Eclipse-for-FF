@@ -285,15 +285,15 @@ with email notifications. Private use among friends and family.
 - Modify: `app/services/turn_engine.py`
 - Modify: `app/routers/games.py`
 
-- [ ] Define all VP sources: colony control (1VP per controlled system), tech VP (listed on tech cards), ships destroyed in combat, council votes, discovery tiles, reputation tiles, sector control (VP based on systems at game end)
-- [ ] Implement VP tracking model (already on Player, but add VP breakdown JSON for display)
-- [ ] Implement end-game trigger: after round 8 (standard game end) or if all rounds exhausted
-- [ ] Implement final VP tally: sum all VP sources for each player
-- [ ] Implement tiebreaker (most money wins tie)
-- [ ] Implement `GET /games/{id}/scores` returning current VP standings
-- [ ] Mark game status as "finished", send end-game notification emails
-- [ ] Write tests: VP calculation, tiebreaker, end-game trigger at round 8
-- [ ] Run test suite - must pass before task 16
+- [x] Define all VP sources: colony control (1VP per controlled system), tech VP (listed on tech cards), ships destroyed in combat, council votes, discovery tiles, reputation tiles, sector control (VP based on systems at game end)
+- [x] Implement VP tracking model (already on Player, but add VP breakdown JSON for display)
+- [x] Implement end-game trigger: after round 8 (standard game end) or if all rounds exhausted
+- [x] Implement final VP tally: sum all VP sources for each player
+- [x] Implement tiebreaker (most money wins tie)
+- [x] Implement `GET /games/{id}/scores` returning current VP standings
+- [x] Mark game status as "finished", send end-game notification emails
+- [x] Write tests: VP calculation, tiebreaker, end-game trigger at round 8
+- [x] Run test suite - must pass before task 16
 
 ### Task 16: Frontend - Board Rendering
 

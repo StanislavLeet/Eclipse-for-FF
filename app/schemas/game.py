@@ -113,6 +113,29 @@ class GameStatusResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class PlayerScoreResponse(BaseModel):
+    """VP standing for a single player."""
+
+    player_id: int
+    user_id: int
+    species: Optional[Species]
+    vp_count: int
+    vp_breakdown: Optional[dict] = None
+
+    model_config = {"from_attributes": True}
+
+
+class ScoresResponse(BaseModel):
+    """Current VP standings for all players in a game."""
+
+    game_id: int
+    game_status: GameStatus
+    winner_player_id: Optional[int]
+    players: list[PlayerScoreResponse]
+
+    model_config = {"from_attributes": True}
+
+
 class HexTileResponse(BaseModel):
     id: int
     game_id: int

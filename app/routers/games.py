@@ -15,6 +15,8 @@ from app.schemas.game import (
     InviteResponse,
     JoinGame,
     PlayerResponse,
+    PlayerScoreResponse,
+    ScoresResponse,
     SelectSpecies,
     ShipOnTileResponse,
     SpeciesInfo,
@@ -220,3 +222,46 @@ async def get_game_map(
             )
         )
     return result
+
+
+@router.get("/{game_id}/scores", response_model=ScoresResponse)
+async def get_game_scores(
+    game_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Return current VP standings for all players in the game.
+
+    Available during active and finished games.
+    For finished games, vp_breakdown contains the full per-source breakdown.
+    """
+    game = await _get_game_or_404(db, game_id)
+    if game.status == GameStatus.lobby:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Scores are not available until the game has started",
+        )
+    from app.services.victory_service import get_scores
+    standings = await get_scores(db, game_id)
+
+    # Determine winner_player_id for finished games
+    winner_player_id: int | None = None
+    if game.status == GameStatus.finished and standings:
+        winner_player_id = standings[0]["player_id"]
+
+    player_scores = [
+        PlayerScoreResponse(
+            player_id=s["player_id"],
+            user_id=s["user_id"],
+            species=s["species"],
+            vp_count=s["vp_count"],
+            vp_breakdown=s["vp_breakdown"],
+        )
+        for s in standings
+    ]
+    return ScoresResponse(
+        game_id=game_id,
+        game_status=game.status,
+        winner_player_id=winner_player_id,
+        players=player_scores,
+    )

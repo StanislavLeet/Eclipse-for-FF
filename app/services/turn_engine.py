@@ -231,6 +231,13 @@ async def _transition_phase(
 
         # Start a new round
         game.current_round += 1
+
+        # End-game trigger: standard Eclipse game ends after round 8
+        if game.current_round > 8:
+            from app.services.victory_service import finalize_game
+            await finalize_game(db, game)
+            return
+
         game.current_phase = GamePhase.activation
 
         # Reset all players for the new round

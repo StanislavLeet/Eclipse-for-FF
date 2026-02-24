@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import Boolean, Enum, ForeignKey, Integer
+from sqlalchemy import JSON, Boolean, Enum, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -29,3 +29,4 @@ class Player(Base):
     is_active_turn: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     has_passed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     vp_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    vp_breakdown: Mapped[dict | None] = mapped_column(JSON, nullable=True, default=None)
