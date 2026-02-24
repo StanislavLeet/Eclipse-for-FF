@@ -347,7 +347,7 @@ with email notifications. Private use among friends and family.
 
 ### Task 19: Update Documentation
 
-- [ ] Update README.md with setup instructions, local dev commands, how to run with Docker (optional)
-- [ ] Document species abilities and technology effects in a `docs/game-rules-reference.md` for developer reference
-- [ ] Update CLAUDE.md if internal patterns changed
-- [ ] Move this plan to `docs/plans/completed/`
+- [x] Update README.md with setup instructions, local dev commands, how to run with Docker (optional)
+- [x] Document species abilities and technology effects in a `docs/game-rules-reference.md` for developer reference
+- [x] Update CLAUDE.md if internal patterns changed
+- [x] Move this plan to `docs/plans/completed/`
