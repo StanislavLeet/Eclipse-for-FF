@@ -215,3 +215,103 @@ a:hover {
     min-height: calc(100vh - 60px);
     color: var(--text-secondary);
 }
+
+/* Board hex tiles */
+.hex-tile {
+    transition: opacity 0.15s;
+}
+
+.hex-tile:hover .hex-bg {
+    filter: brightness(1.3);
+}
+
+.hex-bg {
+    transition: stroke 0.15s, stroke-width 0.15s;
+}
+
+.hex-label,
+.hex-type-label {
+    pointer-events: none;
+    user-select: none;
+}
+
+.hex-planet {
+    transition: filter 0.1s;
+}
+
+.hex-ship {
+    transition: filter 0.1s;
+}
+
+.hex-wormhole {
+    pointer-events: none;
+}
+
+.hex-pop-cube {
+    pointer-events: none;
+}
+
+/* Action highlight pulse */
+@keyframes hex-pulse {
+    0%   { opacity: 1; }
+    50%  { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
+.hex-tile.highlighted .hex-bg {
+    animation: hex-pulse 1.2s infinite;
+}
+
+/* Board controls overlay */
+#board-controls {
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    z-index: 10;
+}
+
+#board-controls button {
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    font-size: 1.1rem;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+#board-controls button:hover {
+    background: var(--bg-panel-light);
+}
+
+/* Game section min-height for smaller screens */
+#game-section {
+    min-height: 0;
+    height: calc(100vh - 52px);
+}
+
+/* Responsive: stack board + panel on narrow screens */
+@media (max-width: 1024px) {
+    #game-section {
+        flex-direction: column;
+    }
+
+    #side-panel {
+        width: 100%;
+        max-height: 220px;
+        border-left: none;
+        border-top: 1px solid var(--border-color);
+        flex-direction: row;
+        flex-wrap: wrap;
+        overflow-y: auto;
+    }
+
+    #player-info,
+    #action-panel,
+    #turn-indicator {
+        flex: 1 1 200px;
+        min-width: 160px;
+    }
+}

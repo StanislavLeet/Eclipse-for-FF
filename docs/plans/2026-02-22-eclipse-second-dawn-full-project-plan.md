@@ -304,15 +304,15 @@ with email notifications. Private use among friends and family.
 - Modify: `frontend/index.html`
 - Modify: `frontend/style.css`
 
-- [ ] Implement hex grid rendering using SVG (axial coordinate to pixel conversion for flat-top hexagons)
-- [ ] Render each tile: unexplored (face-down), explored (show planet slots, wormhole indicators, owner color)
-- [ ] Render ships on hexes (colored icons per player per ship type)
-- [ ] Render population cubes on planet slots (colored per owner)
-- [ ] Implement pan and zoom on the board (mouse wheel + drag)
-- [ ] Fetch and render `GET /games/{id}/map` on page load and after each action
-- [ ] Highlight valid action targets when player selects an action (e.g. highlight reachable hexes for MOVE)
-- [ ] Write frontend tests (basic: API fetch mocking, hex coordinate math)
-- [ ] Run test suite - must pass before task 17
+- [x] Implement hex grid rendering using SVG (axial coordinate to pixel conversion for flat-top hexagons)
+- [x] Render each tile: unexplored (face-down), explored (show planet slots, wormhole indicators, owner color)
+- [x] Render ships on hexes (colored icons per player per ship type)
+- [x] Render population cubes on planet slots (colored per owner)
+- [x] Implement pan and zoom on the board (mouse wheel + drag)
+- [x] Fetch and render `GET /games/{id}/map` on page load and after each action
+- [x] Highlight valid action targets when player selects an action (e.g. highlight reachable hexes for MOVE)
+- [x] Write frontend tests (basic: API fetch mocking, hex coordinate math)
+- [x] Run test suite - must pass before task 17
 
 ### Task 17: Frontend - Player Actions UI
 
