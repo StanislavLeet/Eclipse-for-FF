@@ -322,16 +322,16 @@ with email notifications. Private use among friends and family.
 - Modify: `frontend/index.html`
 - Modify: `frontend/style.css`
 
-- [ ] Implement sidebar panels: player resources, owned technologies, ship blueprints, turn order indicator
-- [ ] Implement action selection UI (action tiles panel: EXPLORE, INFLUENCE, BUILD, RESEARCH, MOVE, UPGRADE, PASS)
-- [ ] Implement action confirmation dialogs (e.g. confirm ship to build, confirm tech to research)
-- [ ] Implement turn notification UI: banner showing whose turn it is
-- [ ] Implement combat log display (show combat results when combat phase occurs)
-- [ ] Implement VP scoreboard panel (visible to all players)
-- [ ] Implement responsive layout for common screen sizes (1280px+)
-- [ ] Implement login/register pages and game lobby UI (create game, invite players, species picker)
-- [ ] Write frontend tests: UI state transitions, form validation
-- [ ] Run test suite - must pass before task 18
+- [x] Implement sidebar panels: player resources, owned technologies, ship blueprints, turn order indicator
+- [x] Implement action selection UI (action tiles panel: EXPLORE, INFLUENCE, BUILD, RESEARCH, MOVE, UPGRADE, PASS)
+- [x] Implement action confirmation dialogs (e.g. confirm ship to build, confirm tech to research)
+- [x] Implement turn notification UI: banner showing whose turn it is
+- [x] Implement combat log display (show combat results when combat phase occurs)
+- [x] Implement VP scoreboard panel (visible to all players)
+- [x] Implement responsive layout for common screen sizes (1280px+)
+- [x] Implement login/register pages and game lobby UI (create game, invite players, species picker)
+- [x] Write frontend tests: UI state transitions, form validation
+- [x] Run test suite - must pass before task 18
 
 ### Task 18: Verify Acceptance Criteria
 

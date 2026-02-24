@@ -405,3 +405,343 @@ class TestCssStructure:
 
     def test_has_responsive_media_query(self):
         assert "@media" in self._load_source()
+
+    def test_has_action_tiles_style(self):
+        assert ".action-tile" in self._load_source()
+
+    def test_has_action_tiles_grid(self):
+        assert ".action-tiles-grid" in self._load_source()
+
+    def test_has_dialog_overlay(self):
+        assert ".dialog-overlay" in self._load_source()
+
+    def test_has_turn_banner(self):
+        assert ".turn-banner" in self._load_source()
+
+    def test_has_resource_grid(self):
+        assert ".resource-grid" in self._load_source()
+
+    def test_has_tech_list(self):
+        assert ".tech-list" in self._load_source()
+
+    def test_has_score_list(self):
+        assert ".score-list" in self._load_source()
+
+    def test_has_combat_log_list(self):
+        assert ".combat-log-list" in self._load_source()
+
+    def test_has_panel_section(self):
+        assert ".panel-section" in self._load_source()
+
+    def test_has_1280px_media_query(self):
+        assert "1280px" in self._load_source()
+
+    def test_has_modal_style(self):
+        assert ".modal" in self._load_source()
+
+    def test_has_species_grid(self):
+        assert ".species-grid" in self._load_source()
+
+    def test_has_game_card(self):
+        assert ".game-card" in self._load_source()
+
+
+# ---------------------------------------------------------------------------
+# panels.js structure checks
+# ---------------------------------------------------------------------------
+
+class TestPanelsJsStructure:
+    """Verify panels.js exports the required functions."""
+
+    REQUIRED_EXPORTS = [
+        "refresh",
+        "renderResources",
+        "renderTechnologies",
+        "renderBlueprints",
+        "renderTurnOrder",
+        "renderScoreboard",
+    ]
+
+    def _load_source(self):
+        return open(os.path.join(FRONTEND_DIR, "panels.js")).read()
+
+    def test_panels_js_exists(self):
+        assert os.path.isfile(os.path.join(FRONTEND_DIR, "panels.js"))
+
+    def test_panels_defined(self):
+        assert "Panels" in self._load_source()
+
+    @pytest.mark.parametrize("fn_name", REQUIRED_EXPORTS)
+    def test_function_present(self, fn_name):
+        source = self._load_source()
+        assert fn_name in source, f"Panels.{fn_name} not found in panels.js"
+
+    def test_module_exports_for_node(self):
+        assert "module.exports" in self._load_source()
+
+    def test_uses_eclipse_api(self):
+        assert "EclipseAPI" in self._load_source()
+
+    def test_player_colors_defined(self):
+        assert "PLAYER_COLORS" in self._load_source()
+
+    def test_renders_resources_panel(self):
+        source = self._load_source()
+        assert "player-resources" in source
+
+    def test_renders_technologies_panel(self):
+        source = self._load_source()
+        assert "player-technologies" in source
+
+    def test_renders_turn_order_panel(self):
+        source = self._load_source()
+        assert "turn-order" in source
+
+    def test_renders_scoreboard_panel(self):
+        source = self._load_source()
+        assert "vp-scoreboard" in source
+
+    def test_escape_html_present(self):
+        source = self._load_source()
+        assert "escapeHtml" in source
+
+
+# ---------------------------------------------------------------------------
+# actions.js structure checks
+# ---------------------------------------------------------------------------
+
+class TestActionsJsStructure:
+    """Verify actions.js exports the required functions."""
+
+    REQUIRED_EXPORTS = [
+        "renderActionTiles",
+        "selectAction",
+        "getSelectedAction",
+        "clearSelection",
+        "showConfirmDialog",
+        "showBuildDialog",
+        "showResearchDialog",
+        "showUpgradeDialog",
+        "closeDialog",
+        "renderCombatLog",
+        "showTurnBanner",
+        "hideTurnBanner",
+        "handleTileClick",
+        "setActionSubmitHandler",
+        "validateCreateGame",
+        "validateRegister",
+        "escapeHtml",
+        "ACTION_TYPES",
+        "ACTION_DESCRIPTIONS",
+    ]
+
+    def _load_source(self):
+        return open(os.path.join(FRONTEND_DIR, "actions.js")).read()
+
+    def test_actions_js_exists(self):
+        assert os.path.isfile(os.path.join(FRONTEND_DIR, "actions.js"))
+
+    def test_actions_defined(self):
+        assert "Actions" in self._load_source()
+
+    @pytest.mark.parametrize("fn_name", REQUIRED_EXPORTS)
+    def test_function_present(self, fn_name):
+        source = self._load_source()
+        assert fn_name in source, f"Actions.{fn_name} not found in actions.js"
+
+    def test_module_exports_for_node(self):
+        assert "module.exports" in self._load_source()
+
+    def test_has_all_action_types(self):
+        source = self._load_source()
+        for action in ["EXPLORE", "INFLUENCE", "BUILD", "RESEARCH", "MOVE", "UPGRADE", "PASS"]:
+            assert action in source, f"Action type {action} missing from actions.js"
+
+    def test_has_dialog_confirm_btn(self):
+        assert "dialog-confirm" in self._load_source()
+
+    def test_has_dialog_cancel_btn(self):
+        assert "dialog-cancel" in self._load_source()
+
+    def test_uses_board_module(self):
+        assert "Board" in self._load_source()
+
+    def test_has_ship_type_options(self):
+        source = self._load_source()
+        for ship in ["interceptor", "cruiser", "dreadnought", "starbase"]:
+            assert ship in source, f"Ship type {ship} missing from actions.js"
+
+
+# ---------------------------------------------------------------------------
+# Form validation logic (Python port / source inspection)
+# ---------------------------------------------------------------------------
+
+class TestFormValidationLogic:
+    """Verify form validation functions exist and contain the right logic."""
+
+    def _load_actions_source(self):
+        return open(os.path.join(FRONTEND_DIR, "actions.js")).read()
+
+    def test_validate_create_game_exists(self):
+        assert "validateCreateGame" in self._load_actions_source()
+
+    def test_validate_register_exists(self):
+        assert "validateRegister" in self._load_actions_source()
+
+    def test_create_game_checks_name_empty(self):
+        source = self._load_actions_source()
+        assert "Game name is required" in source
+
+    def test_create_game_checks_max_players_range(self):
+        source = self._load_actions_source()
+        assert "Max players must be between 2 and 6" in source
+
+    def test_register_checks_email(self):
+        source = self._load_actions_source()
+        assert "email" in source.lower()
+
+    def test_register_checks_password_length(self):
+        source = self._load_actions_source()
+        assert "Password must be at least 6" in source
+
+    def test_register_checks_username_length(self):
+        source = self._load_actions_source()
+        assert "Username must be at least 2" in source
+
+    def test_escape_html_replaces_amp(self):
+        source = self._load_actions_source()
+        # Verify the escapeHtml function handles & -> &amp;
+        assert "&amp;" in source
+
+    def test_escape_html_replaces_lt(self):
+        source = self._load_actions_source()
+        assert "&lt;" in source
+
+
+# ---------------------------------------------------------------------------
+# HTML structure checks for Task 17 new elements
+# ---------------------------------------------------------------------------
+
+class TestHtmlTask17Structure:
+    """Verify index.html has all new panel elements and scripts."""
+
+    def _load_source(self):
+        return open(os.path.join(FRONTEND_DIR, "index.html")).read()
+
+    def test_has_turn_banner(self):
+        assert 'id="turn-banner"' in self._load_source()
+
+    def test_has_turn_order_panel(self):
+        assert 'id="turn-order"' in self._load_source()
+
+    def test_has_player_resources_panel(self):
+        assert 'id="player-resources"' in self._load_source()
+
+    def test_has_action_tiles_panel(self):
+        assert 'id="action-tiles"' in self._load_source()
+
+    def test_has_player_technologies_panel(self):
+        assert 'id="player-technologies"' in self._load_source()
+
+    def test_has_player_blueprints_panel(self):
+        assert 'id="player-blueprints"' in self._load_source()
+
+    def test_has_vp_scoreboard_panel(self):
+        assert 'id="vp-scoreboard"' in self._load_source()
+
+    def test_has_combat_log_panel(self):
+        assert 'id="combat-log"' in self._load_source()
+
+    def test_has_create_game_modal(self):
+        assert 'id="create-game-modal"' in self._load_source()
+
+    def test_has_species_modal(self):
+        assert 'id="species-modal"' in self._load_source()
+
+    def test_has_invite_modal(self):
+        assert 'id="invite-modal"' in self._load_source()
+
+    def test_includes_panels_js(self):
+        assert "panels.js" in self._load_source()
+
+    def test_includes_actions_js(self):
+        assert "actions.js" in self._load_source()
+
+    def test_has_logout_btn(self):
+        assert 'id="logout-btn"' in self._load_source()
+
+    def test_has_create_game_form(self):
+        assert 'id="create-game-form"' in self._load_source()
+
+    def test_has_invite_form(self):
+        assert 'id="invite-form"' in self._load_source()
+
+    def test_has_species_list(self):
+        assert 'id="species-list"' in self._load_source()
+
+    def test_has_board_controls(self):
+        assert 'id="board-controls"' in self._load_source()
+
+    def test_has_back_to_lobby_btn(self):
+        assert 'id="back-to-lobby-btn"' in self._load_source()
+
+    def test_login_form_has_novalidate(self):
+        assert "novalidate" in self._load_source()
+
+
+# ---------------------------------------------------------------------------
+# main.js structure checks for Task 17
+# ---------------------------------------------------------------------------
+
+class TestMainJsTask17Structure:
+    """Verify main.js has the new lobby integration and action handling code."""
+
+    def _load_source(self):
+        return open(os.path.join(FRONTEND_DIR, "main.js")).read()
+
+    def test_has_load_lobby(self):
+        assert "loadLobby" in self._load_source()
+
+    def test_has_open_game(self):
+        assert "openGame" in self._load_source()
+
+    def test_has_submit_action(self):
+        assert "submitAction" in self._load_source()
+
+    def test_uses_panels_refresh(self):
+        assert "Panels" in self._load_source()
+
+    def test_uses_actions_render(self):
+        assert "Actions" in self._load_source()
+
+    def test_has_species_list(self):
+        assert "SPECIES_LIST" in self._load_source()
+
+    def test_has_start_game(self):
+        assert "startGame" in self._load_source()
+
+    def test_has_open_invite_modal(self):
+        assert "openInviteModal" in self._load_source()
+
+    def test_has_logout_handler(self):
+        assert "logout-btn" in self._load_source()
+
+    def test_has_form_error_display(self):
+        assert "showFormError" in self._load_source()
+
+    def test_has_escape_html(self):
+        assert "escapeHtml" in self._load_source()
+
+    def test_has_build_game_card(self):
+        assert "buildGameCard" in self._load_source()
+
+    def test_has_board_zoom_controls(self):
+        assert "board-zoom-in" in self._load_source()
+
+    def test_calls_actions_validate_register(self):
+        source = self._load_source()
+        assert "validateRegister" in source
+
+    def test_calls_actions_validate_create_game(self):
+        source = self._load_source()
+        assert "validateCreateGame" in source

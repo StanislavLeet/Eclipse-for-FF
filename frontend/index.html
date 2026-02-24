@@ -11,6 +11,7 @@
         <h1>Eclipse: Second Dawn for the Galaxy</h1>
         <nav id="nav-bar">
             <span id="nav-status">Loading...</span>
+            <button id="logout-btn" class="btn-secondary hidden">Logout</button>
         </nav>
     </header>
 
@@ -19,12 +20,16 @@
             <p>Connecting to server...</p>
         </div>
 
+        <!-- Auth section: login / register -->
         <div id="auth-section" class="hidden">
             <div id="login-panel">
                 <h2>Login</h2>
-                <form id="login-form">
-                    <input type="email" id="login-email" placeholder="Email" required>
-                    <input type="password" id="login-password" placeholder="Password" required>
+                <div id="login-error" class="form-error hidden"></div>
+                <form id="login-form" novalidate>
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" placeholder="you@example.com" required autocomplete="email">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" placeholder="Password" required autocomplete="current-password">
                     <button type="submit">Login</button>
                 </form>
                 <p>No account? <a href="#" id="show-register">Register</a></p>
@@ -32,30 +37,119 @@
 
             <div id="register-panel" class="hidden">
                 <h2>Register</h2>
-                <form id="register-form">
-                    <input type="email" id="reg-email" placeholder="Email" required>
-                    <input type="text" id="reg-username" placeholder="Username" required>
-                    <input type="password" id="reg-password" placeholder="Password" required>
-                    <button type="submit">Register</button>
+                <div id="register-error" class="form-error hidden"></div>
+                <form id="register-form" novalidate>
+                    <label for="reg-email">Email</label>
+                    <input type="email" id="reg-email" placeholder="you@example.com" required autocomplete="email">
+                    <label for="reg-username">Username</label>
+                    <input type="text" id="reg-username" placeholder="Username" required minlength="2" autocomplete="username">
+                    <label for="reg-password">Password</label>
+                    <input type="password" id="reg-password" placeholder="Password (min 6 chars)" required minlength="6" autocomplete="new-password">
+                    <button type="submit">Create Account</button>
                 </form>
                 <p>Have an account? <a href="#" id="show-login">Login</a></p>
             </div>
         </div>
 
+        <!-- Lobby section: game list, create game -->
         <div id="lobby-section" class="hidden">
-            <h2>Game Lobby</h2>
-            <div id="game-list"></div>
-            <button id="create-game-btn">Create New Game</button>
+            <div class="lobby-header">
+                <h2>Game Lobby</h2>
+                <button id="create-game-btn">+ New Game</button>
+            </div>
+            <div id="game-list">
+                <p class="panel-empty">Loading games...</p>
+            </div>
+
+            <!-- Create game modal -->
+            <div id="create-game-modal" class="modal hidden">
+                <div class="modal-box">
+                    <h3>Create New Game</h3>
+                    <div id="create-game-error" class="form-error hidden"></div>
+                    <form id="create-game-form" novalidate>
+                        <label for="game-name">Game Name</label>
+                        <input type="text" id="game-name" placeholder="My Eclipse Game" required maxlength="80">
+                        <label for="game-max-players">Max Players</label>
+                        <select id="game-max-players">
+                            <option value="2">2 players</option>
+                            <option value="3">3 players</option>
+                            <option value="4" selected>4 players</option>
+                            <option value="5">5 players</option>
+                            <option value="6">6 players</option>
+                        </select>
+                        <div class="form-buttons">
+                            <button type="submit">Create Game</button>
+                            <button type="button" id="cancel-create-game" class="btn-secondary">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Species picker modal -->
+            <div id="species-modal" class="modal hidden">
+                <div class="modal-box">
+                    <h3>Select Your Species</h3>
+                    <p class="modal-subtitle">Choose a species for this game. Each species has unique starting resources and abilities.</p>
+                    <div id="species-list" class="species-grid"></div>
+                    <button type="button" id="cancel-species" class="btn-secondary">Cancel</button>
+                </div>
+            </div>
+
+            <!-- Invite player modal -->
+            <div id="invite-modal" class="modal hidden">
+                <div class="modal-box">
+                    <h3>Invite Player</h3>
+                    <div id="invite-error" class="form-error hidden"></div>
+                    <form id="invite-form" novalidate>
+                        <label for="invite-email">Player Email</label>
+                        <input type="email" id="invite-email" placeholder="player@example.com" required autocomplete="off">
+                        <div class="form-buttons">
+                            <button type="submit">Send Invite</button>
+                            <button type="button" id="cancel-invite" class="btn-secondary">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
 
+        <!-- Game section: board + side panels -->
         <div id="game-section" class="hidden">
             <div id="board-container">
                 <svg id="game-board" xmlns="http://www.w3.org/2000/svg"></svg>
+                <div id="board-controls">
+                    <button id="board-zoom-in" title="Zoom in">+</button>
+                    <button id="board-zoom-out" title="Zoom out">−</button>
+                    <button id="board-center" title="Center view">⌖</button>
+                </div>
             </div>
+
             <div id="side-panel">
-                <div id="player-info"></div>
-                <div id="action-panel"></div>
-                <div id="turn-indicator"></div>
+                <!-- Turn notification banner -->
+                <div id="turn-banner" class="turn-banner hidden"></div>
+
+                <!-- Turn order indicator -->
+                <div id="turn-order" class="panel-section"></div>
+
+                <!-- Player resources -->
+                <div id="player-resources" class="panel-section"></div>
+
+                <!-- Action tiles (shown when it is your turn) -->
+                <div id="action-tiles" class="panel-section"></div>
+
+                <!-- Technologies -->
+                <div id="player-technologies" class="panel-section"></div>
+
+                <!-- Ship blueprints -->
+                <div id="player-blueprints" class="panel-section"></div>
+
+                <!-- VP scoreboard -->
+                <div id="vp-scoreboard" class="panel-section"></div>
+
+                <!-- Combat log -->
+                <div id="combat-log" class="panel-section"></div>
+
+                <!-- Back to lobby -->
+                <button id="back-to-lobby-btn" class="btn-secondary lobby-back">&#8592; Lobby</button>
             </div>
         </div>
     </main>
@@ -63,6 +157,8 @@
     <script src="/static/api.js"></script>
     <script src="/static/hex_renderer.js"></script>
     <script src="/static/board.js"></script>
+    <script src="/static/panels.js"></script>
+    <script src="/static/actions.js"></script>
     <script src="/static/main.js"></script>
 </body>
 </html>

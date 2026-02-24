@@ -2,15 +2,20 @@
 
 const API_BASE = '';  // Same origin
 
-// State
+// ---------------------------------------------------------------------------
+// App state
+// ---------------------------------------------------------------------------
 const state = {
     token: localStorage.getItem('eclipse_token'),
     currentUser: null,
     currentGame: null,
+    currentPlayerId: null,
     boardInitialized: false,
 };
 
-// Utility functions
+// ---------------------------------------------------------------------------
+// Utility: API fetch with auth header
+// ---------------------------------------------------------------------------
 async function apiFetch(path, options = {}) {
     const headers = {
         'Content-Type': 'application/json',
@@ -18,10 +23,7 @@ async function apiFetch(path, options = {}) {
         ...options.headers,
     };
 
-    const response = await fetch(`${API_BASE}${path}`, {
-        ...options,
-        headers,
-    });
+    const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
 
     if (!response.ok) {
         const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
@@ -38,8 +40,11 @@ function syncApiToken() {
     }
 }
 
+// ---------------------------------------------------------------------------
+// Section navigation
+// ---------------------------------------------------------------------------
 function showSection(id) {
-    ['loading-screen', 'auth-section', 'lobby-section', 'game-section'].forEach(sid => {
+    ['loading-screen', 'auth-section', 'lobby-section', 'game-section'].forEach(function (sid) {
         const el = document.getElementById(sid);
         if (el) el.classList.toggle('hidden', sid !== id);
     });
@@ -50,7 +55,21 @@ function updateNavStatus(text) {
     if (el) el.textContent = text;
 }
 
-// Auth
+function showFormError(elementId, message) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.textContent = message;
+    el.classList.remove('hidden');
+}
+
+function clearFormError(elementId) {
+    const el = document.getElementById(elementId);
+    if (el) el.classList.add('hidden');
+}
+
+// ---------------------------------------------------------------------------
+// Health check & initialization
+// ---------------------------------------------------------------------------
 async function checkHealth() {
     try {
         const data = await apiFetch('/health');
@@ -63,7 +82,8 @@ async function checkHealth() {
 async function init() {
     const healthy = await checkHealth();
     if (!healthy) {
-        document.getElementById('loading-screen').textContent = 'Cannot connect to server.';
+        const el = document.getElementById('loading-screen');
+        if (el) el.textContent = 'Cannot connect to server.';
         return;
     }
 
@@ -71,10 +91,13 @@ async function init() {
         try {
             state.currentUser = await apiFetch('/auth/me');
             updateNavStatus(`Logged in as ${state.currentUser.username}`);
+            document.getElementById('logout-btn')?.classList.remove('hidden');
+            await loadLobby();
             showSection('lobby-section');
         } catch {
             localStorage.removeItem('eclipse_token');
             state.token = null;
+            syncApiToken();
             showSection('auth-section');
         }
     } else {
@@ -82,11 +105,20 @@ async function init() {
     }
 }
 
-// Login form
-document.getElementById('login-form')?.addEventListener('submit', async (e) => {
+// ---------------------------------------------------------------------------
+// Auth: login form
+// ---------------------------------------------------------------------------
+document.getElementById('login-form')?.addEventListener('submit', async function (e) {
     e.preventDefault();
-    const email = document.getElementById('login-email').value;
+    clearFormError('login-error');
+
+    const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value;
+
+    if (!email || !password) {
+        showFormError('login-error', 'Email and password are required.');
+        return;
+    }
 
     try {
         const formData = new URLSearchParams();
@@ -104,94 +136,474 @@ document.getElementById('login-form')?.addEventListener('submit', async (e) => {
         syncApiToken();
         await init();
     } catch (err) {
-        alert(`Login failed: ${err.message}`);
+        showFormError('login-error', `Login failed: ${err.message}`);
     }
 });
 
-// Register form
-document.getElementById('register-form')?.addEventListener('submit', async (e) => {
+// ---------------------------------------------------------------------------
+// Auth: register form
+// ---------------------------------------------------------------------------
+document.getElementById('register-form')?.addEventListener('submit', async function (e) {
     e.preventDefault();
-    const email = document.getElementById('reg-email').value;
-    const username = document.getElementById('reg-username').value;
+    clearFormError('register-error');
+
+    const email = document.getElementById('reg-email').value.trim();
+    const username = document.getElementById('reg-username').value.trim();
     const password = document.getElementById('reg-password').value;
+
+    // Client-side validation
+    if (typeof Actions !== 'undefined') {
+        const result = Actions.validateRegister(email, username, password);
+        if (!result.valid) {
+            showFormError('register-error', result.errors.join(' '));
+            return;
+        }
+    }
 
     try {
         await apiFetch('/auth/register', {
             method: 'POST',
             body: JSON.stringify({ email, username, password }),
         });
-        alert('Registration successful! Please login.');
-        document.getElementById('register-panel').classList.add('hidden');
-        document.getElementById('login-panel').classList.remove('hidden');
+        // Switch to login panel after successful registration
+        document.getElementById('register-panel')?.classList.add('hidden');
+        document.getElementById('login-panel')?.classList.remove('hidden');
+        document.getElementById('login-email').value = email;
     } catch (err) {
-        alert(`Registration failed: ${err.message}`);
+        showFormError('register-error', `Registration failed: ${err.message}`);
     }
 });
 
-// Panel toggles
-document.getElementById('show-register')?.addEventListener('click', (e) => {
+// ---------------------------------------------------------------------------
+// Auth: panel toggles
+// ---------------------------------------------------------------------------
+document.getElementById('show-register')?.addEventListener('click', function (e) {
     e.preventDefault();
-    document.getElementById('login-panel').classList.add('hidden');
-    document.getElementById('register-panel').classList.remove('hidden');
+    document.getElementById('login-panel')?.classList.add('hidden');
+    document.getElementById('register-panel')?.classList.remove('hidden');
 });
 
-document.getElementById('show-login')?.addEventListener('click', (e) => {
+document.getElementById('show-login')?.addEventListener('click', function (e) {
     e.preventDefault();
-    document.getElementById('register-panel').classList.add('hidden');
-    document.getElementById('login-panel').classList.remove('hidden');
+    document.getElementById('register-panel')?.classList.add('hidden');
+    document.getElementById('login-panel')?.classList.remove('hidden');
 });
 
 // ---------------------------------------------------------------------------
-// Game view / board integration
+// Auth: logout
 // ---------------------------------------------------------------------------
+document.getElementById('logout-btn')?.addEventListener('click', async function () {
+    try {
+        await apiFetch('/auth/logout', { method: 'POST' });
+    } catch (_) { /* ignore */ }
+    localStorage.removeItem('eclipse_token');
+    state.token = null;
+    state.currentUser = null;
+    state.currentGame = null;
+    state.currentPlayerId = null;
+    syncApiToken();
+    document.getElementById('logout-btn')?.classList.add('hidden');
+    updateNavStatus('');
+    showSection('auth-section');
+});
 
+// ---------------------------------------------------------------------------
+// Lobby: load and render game list
+// ---------------------------------------------------------------------------
+async function loadLobby() {
+    const listEl = document.getElementById('game-list');
+    if (!listEl) return;
+    listEl.innerHTML = '<p class="panel-empty">Loading games...</p>';
+
+    try {
+        const games = await apiFetch('/games');
+        if (!games || games.length === 0) {
+            listEl.innerHTML = '<p class="panel-empty">No games yet. Create one!</p>';
+            return;
+        }
+
+        listEl.innerHTML = '';
+        for (const game of games) {
+            const card = buildGameCard(game);
+            listEl.appendChild(card);
+        }
+    } catch (err) {
+        listEl.innerHTML = `<p class="panel-error">Failed to load games: ${err.message}</p>`;
+    }
+}
+
+function buildGameCard(game) {
+    const card = document.createElement('div');
+    card.className = 'game-card';
+
+    const playerCount = (game.players || []).length;
+    const statusClass = `game-status-${game.status || 'lobby'}`;
+
+    card.innerHTML =
+        '<div class="game-card-info">' +
+            `<div class="game-card-name">${escapeHtml(game.name)}</div>` +
+            '<div class="game-card-meta">' +
+                `<span class="${statusClass}">${(game.status || 'lobby').toUpperCase()}</span>` +
+                ` &middot; ${playerCount}/${game.max_players || '?'} players` +
+                (game.current_round ? ` &middot; Round ${game.current_round}` : '') +
+            '</div>' +
+        '</div>' +
+        '<div class="game-card-actions"></div>';
+
+    const actionsEl = card.querySelector('.game-card-actions');
+
+    if (game.status === 'lobby') {
+        // Select species button (if player is already in the game)
+        const myPlayer = (game.players || []).find(function (p) {
+            return state.currentUser && p.user_id === state.currentUser.id;
+        });
+        if (myPlayer && !myPlayer.species) {
+            const speciesBtn = document.createElement('button');
+            speciesBtn.textContent = 'Pick Species';
+            speciesBtn.className = 'btn-secondary';
+            speciesBtn.addEventListener('click', function () { openSpeciesPicker(game.id); });
+            actionsEl.appendChild(speciesBtn);
+        }
+        // Start game button for host (first player)
+        if (myPlayer && myPlayer.turn_order === 1) {
+            const startBtn = document.createElement('button');
+            startBtn.textContent = 'Start';
+            startBtn.addEventListener('click', function () { startGame(game.id); });
+            actionsEl.appendChild(startBtn);
+        }
+        // Invite button
+        const inviteBtn = document.createElement('button');
+        inviteBtn.textContent = 'Invite';
+        inviteBtn.className = 'btn-secondary';
+        inviteBtn.addEventListener('click', function () { openInviteModal(game.id); });
+        actionsEl.appendChild(inviteBtn);
+    }
+
+    // Open game button for active/finished games
+    if (game.status !== 'lobby') {
+        const openBtn = document.createElement('button');
+        openBtn.textContent = game.status === 'finished' ? 'View' : 'Play';
+        openBtn.addEventListener('click', function () { openGame(game.id); });
+        actionsEl.appendChild(openBtn);
+    } else {
+        const viewBtn = document.createElement('button');
+        viewBtn.textContent = 'View';
+        viewBtn.addEventListener('click', function () { openGame(game.id); });
+        actionsEl.appendChild(viewBtn);
+    }
+
+    return card;
+}
+
+// ---------------------------------------------------------------------------
+// Lobby: create game
+// ---------------------------------------------------------------------------
+document.getElementById('create-game-btn')?.addEventListener('click', function () {
+    document.getElementById('create-game-modal')?.classList.remove('hidden');
+    document.getElementById('game-name')?.focus();
+});
+
+document.getElementById('cancel-create-game')?.addEventListener('click', function () {
+    document.getElementById('create-game-modal')?.classList.add('hidden');
+    clearFormError('create-game-error');
+});
+
+document.getElementById('create-game-form')?.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    clearFormError('create-game-error');
+
+    const name = document.getElementById('game-name')?.value.trim();
+    const maxPlayers = parseInt(document.getElementById('game-max-players')?.value, 10);
+
+    // Client-side validation
+    if (typeof Actions !== 'undefined') {
+        const result = Actions.validateCreateGame(name, maxPlayers);
+        if (!result.valid) {
+            showFormError('create-game-error', result.errors.join(' '));
+            return;
+        }
+    }
+
+    try {
+        await apiFetch('/games', {
+            method: 'POST',
+            body: JSON.stringify({ name, max_players: maxPlayers }),
+        });
+        document.getElementById('create-game-modal')?.classList.add('hidden');
+        document.getElementById('create-game-form')?.reset();
+        await loadLobby();
+    } catch (err) {
+        showFormError('create-game-error', `Failed to create game: ${err.message}`);
+    }
+});
+
+// ---------------------------------------------------------------------------
+// Lobby: species picker
+// ---------------------------------------------------------------------------
+const SPECIES_LIST = [
+    { id: 'human', name: 'Human', desc: 'Balanced all-rounder with strong economy.' },
+    { id: 'eridani_empire', name: 'Eridani Empire', desc: 'Rich starting resources, fewer influence discs.' },
+    { id: 'hydran_progress', name: 'Hydran Progress', desc: 'Bonus science income for fast research.' },
+    { id: 'planta', name: 'Planta', desc: 'Unique hex shape and plant-like growth.' },
+    { id: 'descendants_of_draco', name: 'Descendants of Draco', desc: 'Powerful ancient-tech starting ships.' },
+    { id: 'mechanema', name: 'Mechanema', desc: 'Cheap upgrades and advanced ship builds.' },
+    { id: 'orion_hegemony', name: 'Orion Hegemony', desc: 'Strong military with orbital capacity.' },
+    { id: 'exiles', name: 'Exiles', desc: 'Mobile homeworld, starting on a starbase.' },
+    { id: 'terran_directorate', name: 'Terran Directorate', desc: 'Economic powerhouse with trade bonuses.' },
+];
+
+let _speciesTargetGameId = null;
+
+function openSpeciesPicker(gameId) {
+    _speciesTargetGameId = gameId;
+    const listEl = document.getElementById('species-list');
+    if (!listEl) return;
+
+    listEl.innerHTML = SPECIES_LIST.map(function (sp) {
+        return '<div class="species-card" data-species="' + sp.id + '">' +
+            '<div class="species-card-name">' + escapeHtml(sp.name) + '</div>' +
+            '<div class="species-card-desc">' + escapeHtml(sp.desc) + '</div>' +
+            '</div>';
+    }).join('');
+
+    listEl.querySelectorAll('.species-card').forEach(function (card) {
+        card.addEventListener('click', function () {
+            listEl.querySelectorAll('.species-card').forEach(function (c) { c.classList.remove('selected'); });
+            card.classList.add('selected');
+        });
+        card.addEventListener('dblclick', function () {
+            confirmSpeciesSelection(card.dataset.species);
+        });
+    });
+
+    document.getElementById('species-modal')?.classList.remove('hidden');
+}
+
+async function confirmSpeciesSelection(species) {
+    if (!_speciesTargetGameId || !species) return;
+    try {
+        await apiFetch(`/games/${_speciesTargetGameId}/select-species`, {
+            method: 'POST',
+            body: JSON.stringify({ species }),
+        });
+        document.getElementById('species-modal')?.classList.add('hidden');
+        _speciesTargetGameId = null;
+        await loadLobby();
+    } catch (err) {
+        alert(`Failed to select species: ${err.message}`);
+    }
+}
+
+document.getElementById('cancel-species')?.addEventListener('click', function () {
+    document.getElementById('species-modal')?.classList.add('hidden');
+    _speciesTargetGameId = null;
+});
+
+// Add confirm button to species modal via click on selected card
+document.getElementById('species-modal')?.addEventListener('click', function (e) {
+    if (e.target.id === 'species-modal') {
+        document.getElementById('species-modal').classList.add('hidden');
+        _speciesTargetGameId = null;
+    }
+});
+
+// ---------------------------------------------------------------------------
+// Lobby: invite player
+// ---------------------------------------------------------------------------
+let _inviteTargetGameId = null;
+
+function openInviteModal(gameId) {
+    _inviteTargetGameId = gameId;
+    document.getElementById('invite-modal')?.classList.remove('hidden');
+    document.getElementById('invite-email')?.focus();
+}
+
+document.getElementById('cancel-invite')?.addEventListener('click', function () {
+    document.getElementById('invite-modal')?.classList.add('hidden');
+    _inviteTargetGameId = null;
+    clearFormError('invite-error');
+});
+
+document.getElementById('invite-form')?.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    clearFormError('invite-error');
+    if (!_inviteTargetGameId) return;
+
+    const email = document.getElementById('invite-email')?.value.trim();
+    if (!email) {
+        showFormError('invite-error', 'Email is required.');
+        return;
+    }
+
+    try {
+        await apiFetch(`/games/${_inviteTargetGameId}/invite`, {
+            method: 'POST',
+            body: JSON.stringify({ email }),
+        });
+        document.getElementById('invite-modal')?.classList.add('hidden');
+        document.getElementById('invite-form')?.reset();
+        _inviteTargetGameId = null;
+        alert('Invite sent!');
+    } catch (err) {
+        showFormError('invite-error', `Failed to send invite: ${err.message}`);
+    }
+});
+
+// ---------------------------------------------------------------------------
+// Lobby: start game
+// ---------------------------------------------------------------------------
+async function startGame(gameId) {
+    try {
+        await apiFetch(`/games/${gameId}/start`, { method: 'POST' });
+        await openGame(gameId);
+    } catch (err) {
+        alert(`Failed to start game: ${err.message}`);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Game view: open and render
+// ---------------------------------------------------------------------------
 async function openGame(gameId) {
     try {
         const gameData = await apiFetch(`/games/${gameId}`);
         state.currentGame = gameData;
-        showSection('game-section');
-        updateNavStatus(`Game: ${gameData.name} | Round ${gameData.current_round}`);
 
-        // Initialize board SVG once
+        // Determine current player (the player record for the logged-in user)
+        const myPlayer = (gameData.players || []).find(function (p) {
+            return state.currentUser && p.user_id === state.currentUser.id;
+        });
+        state.currentPlayerId = myPlayer ? myPlayer.id : null;
+
+        showSection('game-section');
+        updateNavStatus(`${gameData.name} | Round ${gameData.current_round || '—'}`);
+
+        // Initialize board once
         if (!state.boardInitialized && typeof Board !== 'undefined') {
             const svg = document.getElementById('game-board');
             if (svg) {
                 Board.init(svg);
-                Board.setTileClickHandler((tile, action) => {
-                    console.log('Tile clicked:', tile, 'action:', action);
+                Board.setTileClickHandler(function (tile, actionType) {
+                    if (typeof Actions !== 'undefined') {
+                        Actions.handleTileClick(tile, actionType || Actions.getSelectedAction());
+                    }
                 });
                 state.boardInitialized = true;
             }
         }
 
-        // Load / refresh map
+        // Load board map
         if (typeof Board !== 'undefined' && gameData.status !== 'lobby') {
-            const players = gameData.players || [];
-            await Board.loadMap(gameId, players);
+            await Board.loadMap(gameId, gameData.players || []);
         }
 
-        // Render turn indicator
-        const turnEl = document.getElementById('turn-indicator');
-        if (turnEl) {
+        // Turn banner
+        if (typeof Actions !== 'undefined') {
+            const isMyTurn = myPlayer ? myPlayer.is_active_turn : false;
             if (gameData.active_player_id) {
-                const activePl = (gameData.players || []).find(
-                    p => p.id === gameData.active_player_id
+                const activePl = (gameData.players || []).find(function (p) {
+                    return p.id === gameData.active_player_id;
+                });
+                const name = activePl ? (activePl.username || 'Unknown') : 'Unknown';
+                Actions.showTurnBanner(
+                    isMyTurn ? 'Your turn!' : `${name}'s turn`,
+                    isMyTurn
                 );
-                turnEl.textContent = activePl
-                    ? `${activePl.username || activePl.user_id}'s turn`
-                    : 'Waiting for player...';
-            } else {
-                turnEl.textContent = `Phase: ${gameData.current_phase || '—'}`;
             }
         }
+
+        // Action tiles
+        const isMyTurn = myPlayer ? myPlayer.is_active_turn : false;
+        if (typeof Actions !== 'undefined') {
+            Actions.renderActionTiles(isMyTurn);
+        }
+
+        // Wire up action submit handler
+        if (typeof Actions !== 'undefined') {
+            Actions.setActionSubmitHandler(async function (actionType, payload) {
+                await submitAction(gameId, actionType, payload);
+            });
+        }
+
+        // Side panels
+        if (typeof Panels !== 'undefined') {
+            await Panels.refresh(gameId, state.currentPlayerId, gameData);
+        }
+
     } catch (err) {
         alert(`Failed to open game: ${err.message}`);
     }
 }
 
-// Expose for use by lobby / invite links
+// ---------------------------------------------------------------------------
+// Game: submit action
+// ---------------------------------------------------------------------------
+async function submitAction(gameId, actionType, payload) {
+    try {
+        await apiFetch(`/games/${gameId}/action`, {
+            method: 'POST',
+            body: JSON.stringify({ action_type: actionType, payload: payload || {} }),
+        });
+        // Refresh game state after action
+        await openGame(gameId);
+    } catch (err) {
+        alert(`Action failed: ${err.message}`);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Board controls
+// ---------------------------------------------------------------------------
+document.getElementById('board-zoom-in')?.addEventListener('click', function () {
+    if (typeof Board !== 'undefined' && Board._state) {
+        Board._state.zoom = Math.min(4, Board._state.zoom * 1.2);
+        if (typeof Board.render === 'function') Board.render();
+    }
+});
+
+document.getElementById('board-zoom-out')?.addEventListener('click', function () {
+    if (typeof Board !== 'undefined' && Board._state) {
+        Board._state.zoom = Math.max(0.2, Board._state.zoom / 1.2);
+        if (typeof Board.render === 'function') Board.render();
+    }
+});
+
+document.getElementById('board-center')?.addEventListener('click', function () {
+    if (typeof Board !== 'undefined' && typeof Board.centerView === 'function') {
+        Board.centerView();
+    }
+});
+
+// ---------------------------------------------------------------------------
+// Back to lobby button
+// ---------------------------------------------------------------------------
+document.getElementById('back-to-lobby-btn')?.addEventListener('click', async function () {
+    state.currentGame = null;
+    state.currentPlayerId = null;
+    await loadLobby();
+    showSection('lobby-section');
+});
+
+// ---------------------------------------------------------------------------
+// Expose for global use (invite links, tests)
+// ---------------------------------------------------------------------------
 window.openGame = openGame;
 
-// Start app
+// ---------------------------------------------------------------------------
+// Utility
+// ---------------------------------------------------------------------------
+function escapeHtml(str) {
+    if (typeof str !== 'string') str = String(str);
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// ---------------------------------------------------------------------------
+// Start the app
+// ---------------------------------------------------------------------------
 syncApiToken();
 init();
