@@ -335,15 +335,15 @@ with email notifications. Private use among friends and family.
 
 ### Task 18: Verify Acceptance Criteria
 
-- [ ] Manual test: two players create a game, invite each other, select species, start game
-- [ ] Manual test: complete a full game turn cycle (all phases) with at least one combat
-- [ ] Manual test: research a technology and verify effects apply correctly
-- [ ] Manual test: play through 8 rounds and verify game ends with correct winner
-- [ ] Manual test: email notification received when turn changes
-- [ ] Manual test: illegal move (e.g. moving ship through unconnected hex) is rejected with clear error
-- [ ] Run full backend test suite: `pytest` -- must pass 100%
-- [ ] Run linter: `ruff check .` or `flake8` -- must pass
-- [ ] Verify test coverage: `pytest --cov=app` -- 80%+ coverage
+- [x] Manual test: two players create a game, invite each other, select species, start game
+- [x] Manual test: complete a full game turn cycle (all phases) with at least one combat
+- [x] Manual test: research a technology and verify effects apply correctly
+- [x] Manual test: play through 8 rounds and verify game ends with correct winner
+- [x] Manual test: email notification received when turn changes
+- [x] Manual test: illegal move (e.g. moving ship through unconnected hex) is rejected with clear error
+- [x] Run full backend test suite: `pytest` -- must pass 100%
+- [x] Run linter: `ruff check .` or `flake8` -- must pass
+- [x] Verify test coverage: `pytest --cov=app` -- 80%+ coverage
 
 ### Task 19: Update Documentation
 
