@@ -1,3 +1,6 @@
+import os
+import tempfile
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -6,18 +9,21 @@ from app.database import get_db
 from app.main import app
 from app.models.base import Base
 
-TEST_DB_URL = "sqlite+aiosqlite:///./test.db"
-
 
 @pytest.fixture
 async def db_engine():
-    engine = create_async_engine(TEST_DB_URL, connect_args={"check_same_thread": False})
+    db_fd, db_path = tempfile.mkstemp(suffix=".db")
+    os.close(db_fd)
+    test_db_url = f"sqlite+aiosqlite:///{db_path}"
+    engine = create_async_engine(test_db_url, connect_args={"check_same_thread": False})
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield engine
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
     await engine.dispose()
+    if os.path.exists(db_path):
+        os.unlink(db_path)
 
 
 @pytest.fixture
