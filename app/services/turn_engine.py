@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 from sqlalchemy import select
@@ -13,6 +14,8 @@ from app.services.resource_service import (
 )
 from app.services.ship_service import apply_upgrade, build_ship
 from app.services.research_service import get_player_tech_ids
+
+logger = logging.getLogger(__name__)
 
 
 async def get_active_player(db: AsyncSession, game_id: int) -> Player | None:
@@ -177,8 +180,11 @@ async def submit_action(
     # Notify the next active player (best-effort; errors are logged, not raised)
     next_active = await get_active_player(db, game.id)
     if next_active:
-        from app.services.notification_service import notify_turn_change
-        await notify_turn_change(db, game, next_active)
+        try:
+            from app.services.notification_service import notify_turn_change
+            await notify_turn_change(db, game, next_active)
+        except Exception:
+            logger.warning("Failed to send turn-change notification for game %s", game.id, exc_info=True)
 
     return action
 
@@ -220,6 +226,8 @@ async def _transition_phase(
     if game.current_phase == GamePhase.activation:
         game.current_phase = GamePhase.combat
     elif game.current_phase == GamePhase.combat:
+        from app.services.combat_service import resolve_combat_for_game
+        await resolve_combat_for_game(game.id, game.current_round, db)
         game.current_phase = GamePhase.upkeep
     elif game.current_phase == GamePhase.upkeep:
         # Run Galactic Council vote if the center has been explored
@@ -268,7 +276,10 @@ async def advance_phase(db: AsyncSession, game: Game) -> Game:
     # Notify the next active player after a manual phase advance (best-effort)
     next_active = await get_active_player(db, game.id)
     if next_active:
-        from app.services.notification_service import notify_turn_change
-        await notify_turn_change(db, game, next_active)
+        try:
+            from app.services.notification_service import notify_turn_change
+            await notify_turn_change(db, game, next_active)
+        except Exception:
+            logger.warning("Failed to send turn-change notification for game %s", game.id, exc_info=True)
 
     return game

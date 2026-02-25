@@ -268,9 +268,10 @@ def test_missile_phase_before_cannon_phase():
     phases_in_order = [e["phase"] for e in shots]
     missile_idx = next((i for i, p in enumerate(phases_in_order) if p == "missiles"), None)
     cannon_idx = next((i for i, p in enumerate(phases_in_order) if p == "cannons"), None)
-    # missiles phase fires first
-    if missile_idx is not None and cannon_idx is not None:
-        assert missile_idx < cannon_idx
+    # Both phases must fire (computer_accuracy=5 guarantees hits) and missiles must come first
+    assert missile_idx is not None, "No missile phase events logged"
+    assert cannon_idx is not None, "No cannon phase events logged"
+    assert missile_idx < cannon_idx
 
 
 # ---------------------------------------------------------------------------

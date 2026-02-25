@@ -80,9 +80,7 @@ async def notify_game_ended(
 
     winner_line = ""
     if winner:
-        winner_email = await _get_user_email(db, winner.user_id)
-        winner_display = winner_email or f"Player {winner.id}"
-        winner_line = f"Winner: {winner_display} with {winner.vp_count} VP\n"
+        winner_line = f"Winner: Player {winner.id} with {winner.vp_count} VP\n"
 
     scores = "\n".join(f"  Player {p.id}: {p.vp_count} VP" for p in players)
 
