@@ -121,14 +121,9 @@ document.getElementById('login-form')?.addEventListener('submit', async function
     }
 
     try {
-        const formData = new URLSearchParams();
-        formData.append('username', email);
-        formData.append('password', password);
-
         const data = await apiFetch('/auth/login', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: formData,
+            body: JSON.stringify({ email, password }),
         });
 
         state.token = data.access_token;
