@@ -108,10 +108,15 @@ async def select_species(
     if player is None:
         raise ValueError("Not a player in this game")
 
-    # Check no other player has already chosen this species
+    # Check no other player has already chosen this species.
+    # Human is intentionally allowed to be picked by multiple players.
     players = await get_players_for_game(db, game.id)
     for p in players:
-        if p.id != player.id and p.species == species:
+        if (
+            species != Species.human
+            and p.id != player.id
+            and p.species == species
+        ):
             raise ValueError(f"Species '{species.value}' is already taken")
 
     player.species = species

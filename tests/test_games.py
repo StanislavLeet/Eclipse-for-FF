@@ -273,7 +273,7 @@ class TestSelectSpecies:
         assert resp.status_code == 200
         assert resp.json()["species"] == "human"
 
-    async def test_select_species_duplicate_rejected(self, db_client: AsyncClient):
+    async def test_select_species_duplicate_non_human_rejected(self, db_client: AsyncClient):
         host_token = await register_and_login(db_client, "sp2h@example.com", "sp2host")
         player_token = await register_and_login(db_client, "sp2p@example.com", "sp2player")
         game = await create_game(db_client, host_token)
@@ -290,20 +290,72 @@ class TestSelectSpecies:
             headers=auth_headers(player_token),
         )
 
-        # Host picks human
+        # Host picks planta
+        await db_client.post(
+            f"/games/{game['id']}/select-species",
+            json={"species": "planta"},
+            headers=auth_headers(host_token),
+        )
+        # Player tries to also pick planta - should fail
+        resp = await db_client.post(
+            f"/games/{game['id']}/select-species",
+            json={"species": "planta"},
+            headers=auth_headers(player_token),
+        )
+        assert resp.status_code == 400
+        assert "taken" in resp.json()["detail"]
+
+
+    async def test_select_species_duplicate_human_allowed(self, db_client: AsyncClient):
+        host_token = await register_and_login(db_client, "sph2h@example.com", "sph2host")
+        player_token = await register_and_login(db_client, "sph2p@example.com", "sph2player")
+        game = await create_game(db_client, host_token)
+
+        invite_resp = await db_client.post(
+            f"/games/{game['id']}/invite",
+            json={"invitee_email": "sph2p@example.com"},
+            headers=auth_headers(host_token),
+        )
+        token_val = invite_resp.json()["token"]
+        await db_client.post(
+            f"/games/{game['id']}/join",
+            json={"token": token_val},
+            headers=auth_headers(player_token),
+        )
+
         await db_client.post(
             f"/games/{game['id']}/select-species",
             json={"species": "human"},
             headers=auth_headers(host_token),
         )
-        # Player tries to also pick human - should fail
         resp = await db_client.post(
             f"/games/{game['id']}/select-species",
             json={"species": "human"},
             headers=auth_headers(player_token),
         )
-        assert resp.status_code == 400
-        assert "taken" in resp.json()["detail"]
+        assert resp.status_code == 200
+        assert resp.json()["species"] == "human"
+
+    async def test_select_species_random_success(self, db_client: AsyncClient):
+        token = await register_and_login(db_client, "sprand@example.com", "sprand")
+        game = await create_game(db_client, token)
+        resp = await db_client.post(
+            f"/games/{game['id']}/select-species",
+            json={"species": "random"},
+            headers=auth_headers(token),
+        )
+        assert resp.status_code == 200
+        assert resp.json()["species"] in {
+            "human",
+            "eridani_empire",
+            "hydran_progress",
+            "planta",
+            "descendants_of_draco",
+            "mechanema",
+            "orion_hegemony",
+            "exiles",
+            "terran_directorate",
+        }
 
     async def test_select_species_not_in_game(self, db_client: AsyncClient):
         host_token = await register_and_login(db_client, "sp3h@example.com", "sp3host")

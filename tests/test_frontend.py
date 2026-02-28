@@ -679,6 +679,9 @@ class TestHtmlTask17Structure:
     def test_has_species_list(self):
         assert 'id="species-list"' in self._load_source()
 
+    def test_has_confirm_species_button(self):
+        assert 'id="confirm-species"' in self._load_source()
+
     def test_has_board_controls(self):
         assert 'id="board-controls"' in self._load_source()
 
@@ -716,6 +719,9 @@ class TestMainJsTask17Structure:
 
     def test_has_species_list(self):
         assert "SPECIES_LIST" in self._load_source()
+
+    def test_has_random_species_option(self):
+        assert "random" in self._load_source()
 
     def test_has_start_game(self):
         assert "startGame" in self._load_source()

@@ -346,6 +346,7 @@ document.getElementById('create-game-form')?.addEventListener('submit', async fu
 // ---------------------------------------------------------------------------
 const SPECIES_LIST = [
     { id: 'human', name: 'Human', desc: 'Balanced all-rounder with strong economy.' },
+    { id: 'random', name: 'Random', desc: 'Let fate decide: assigns one random species at selection time.' },
     { id: 'eridani_empire', name: 'Eridani Empire', desc: 'Rich starting resources, fewer influence discs.' },
     { id: 'hydran_progress', name: 'Hydran Progress', desc: 'Bonus science income for fast research.' },
     { id: 'planta', name: 'Planta', desc: 'Unique hex shape and plant-like growth.' },
@@ -356,27 +357,42 @@ const SPECIES_LIST = [
     { id: 'terran_directorate', name: 'Terran Directorate', desc: 'Economic powerhouse with trade bonuses.' },
 ];
 
+const PICKABLE_SPECIES_IDS = SPECIES_LIST.filter(function (sp) { return sp.id !== 'random'; }).map(function (sp) { return sp.id; });
 let _speciesTargetGameId = null;
+let _selectedSpeciesId = null;
+
+function setSelectedSpecies(speciesId) {
+    _selectedSpeciesId = speciesId || null;
+    const listEl = document.getElementById('species-list');
+    listEl?.querySelectorAll('.species-card').forEach(function (card) {
+        card.classList.toggle('selected', card.dataset.species === _selectedSpeciesId);
+    });
+    const confirmBtn = document.getElementById('confirm-species');
+    if (confirmBtn) confirmBtn.disabled = !_selectedSpeciesId;
+}
+
+function resolveSpeciesSelection(speciesId) {
+    if (speciesId !== 'random') return speciesId;
+    if (PICKABLE_SPECIES_IDS.length === 0) return null;
+    return PICKABLE_SPECIES_IDS[Math.floor(Math.random() * PICKABLE_SPECIES_IDS.length)];
+}
 
 function openSpeciesPicker(gameId) {
     _speciesTargetGameId = gameId;
+    setSelectedSpecies(null);
     const listEl = document.getElementById('species-list');
     if (!listEl) return;
 
     listEl.innerHTML = SPECIES_LIST.map(function (sp) {
-        return '<div class="species-card" data-species="' + sp.id + '">' +
+        return '<button type="button" class="species-card" data-species="' + sp.id + '">' +
             '<div class="species-card-name">' + escapeHtml(sp.name) + '</div>' +
             '<div class="species-card-desc">' + escapeHtml(sp.desc) + '</div>' +
-            '</div>';
+            '</button>';
     }).join('');
 
     listEl.querySelectorAll('.species-card').forEach(function (card) {
         card.addEventListener('click', function () {
-            listEl.querySelectorAll('.species-card').forEach(function (c) { c.classList.remove('selected'); });
-            card.classList.add('selected');
-        });
-        card.addEventListener('dblclick', function () {
-            confirmSpeciesSelection(card.dataset.species);
+            setSelectedSpecies(card.dataset.species);
         });
     });
 
@@ -392,6 +408,7 @@ async function confirmSpeciesSelection(species) {
         });
         document.getElementById('species-modal')?.classList.add('hidden');
         _speciesTargetGameId = null;
+        setSelectedSpecies(null);
         await loadLobby();
     } catch (err) {
         alert(`Failed to select species: ${err.message}`);
@@ -401,13 +418,20 @@ async function confirmSpeciesSelection(species) {
 document.getElementById('cancel-species')?.addEventListener('click', function () {
     document.getElementById('species-modal')?.classList.add('hidden');
     _speciesTargetGameId = null;
+    setSelectedSpecies(null);
 });
 
-// Add confirm button to species modal via click on selected card
+document.getElementById('confirm-species')?.addEventListener('click', async function () {
+    const resolvedSpecies = resolveSpeciesSelection(_selectedSpeciesId);
+    await confirmSpeciesSelection(resolvedSpecies);
+});
+
+// Close species modal when clicking outside the dialog
 document.getElementById('species-modal')?.addEventListener('click', function (e) {
     if (e.target.id === 'species-modal') {
         document.getElementById('species-modal').classList.add('hidden');
         _speciesTargetGameId = null;
+        setSelectedSpecies(null);
     }
 });
 

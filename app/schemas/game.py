@@ -64,7 +64,15 @@ class JoinGame(BaseModel):
 
 
 class SelectSpecies(BaseModel):
-    species: Species
+    species: str
+
+    @field_validator("species")
+    @classmethod
+    def validate_species(cls, v: str) -> str:
+        allowed = {s.value for s in Species} | {"random"}
+        if v not in allowed:
+            raise ValueError("Invalid species")
+        return v
 
 
 class SpeciesInfo(BaseModel):
