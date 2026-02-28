@@ -231,14 +231,15 @@ function buildGameCard(game) {
     const card = document.createElement('div');
     card.className = 'game-card';
 
+    const gameStatus = String(game.status || 'lobby').toLowerCase();
     const playerCount = (game.players || []).length;
-    const statusClass = `game-status-${game.status || 'lobby'}`;
+    const statusClass = `game-status-${gameStatus}`;
 
     card.innerHTML =
         '<div class="game-card-info">' +
             `<div class="game-card-name">${escapeHtml(game.name)}</div>` +
             '<div class="game-card-meta">' +
-                `<span class="${statusClass}">${(game.status || 'lobby').toUpperCase()}</span>` +
+                `<span class="${statusClass}">${gameStatus.toUpperCase()}</span>` +
                 ` &middot; ${playerCount}/${game.max_players || '?'} players` +
                 (game.current_round ? ` &middot; Round ${game.current_round}` : '') +
             '</div>' +
@@ -247,11 +248,17 @@ function buildGameCard(game) {
 
     const actionsEl = card.querySelector('.game-card-actions');
 
-    if (game.status === 'lobby') {
+    if (gameStatus === 'lobby') {
         // Select species button (if player is already in the game)
         const myPlayer = (game.players || []).find(function (p) {
-            return state.currentUser && p.user_id === state.currentUser.id;
+            return state.currentUser && Number(p.user_id) === Number(state.currentUser.id);
         });
+        if (!myPlayer) {
+            const joinBtn = document.createElement('button');
+            joinBtn.textContent = 'Join';
+            joinBtn.addEventListener('click', function () { joinGame(game.id); });
+            actionsEl.appendChild(joinBtn);
+        }
         if (myPlayer && !myPlayer.species) {
             const speciesBtn = document.createElement('button');
             speciesBtn.textContent = 'Pick Species';
@@ -259,23 +266,31 @@ function buildGameCard(game) {
             speciesBtn.addEventListener('click', function () { openSpeciesPicker(game.id); });
             actionsEl.appendChild(speciesBtn);
         }
-        // Start game button for host (first player)
-        if (myPlayer && myPlayer.turn_order === 1) {
+        // Start/Delete buttons for host
+        if (myPlayer && Number(game.host_user_id) === Number(state.currentUser?.id)) {
             const startBtn = document.createElement('button');
             startBtn.textContent = 'Start';
             startBtn.addEventListener('click', function () { startGame(game.id); });
             actionsEl.appendChild(startBtn);
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.className = 'btn-danger';
+            deleteBtn.addEventListener('click', function () { deleteGame(game.id, game.name); });
+            actionsEl.appendChild(deleteBtn);
         }
-        // Invite button
-        const inviteBtn = document.createElement('button');
-        inviteBtn.textContent = 'Invite';
-        inviteBtn.className = 'btn-secondary';
-        inviteBtn.addEventListener('click', function () { openInviteModal(game.id); });
-        actionsEl.appendChild(inviteBtn);
+        // Invite button only for joined players
+        if (myPlayer) {
+            const inviteBtn = document.createElement('button');
+            inviteBtn.textContent = 'Invite';
+            inviteBtn.className = 'btn-secondary';
+            inviteBtn.addEventListener('click', function () { openInviteModal(game.id); });
+            actionsEl.appendChild(inviteBtn);
+        }
     }
 
     // Open game button for active/finished games
-    if (game.status !== 'lobby') {
+    if (gameStatus !== 'lobby') {
         const openBtn = document.createElement('button');
         openBtn.textContent = game.status === 'finished' ? 'View' : 'Play';
         openBtn.addEventListener('click', function () { openGame(game.id); });
@@ -443,6 +458,35 @@ document.getElementById('invite-form')?.addEventListener('submit', async functio
         showFormError('invite-error', `Failed to send invite: ${err.message}`);
     }
 });
+
+// ---------------------------------------------------------------------------
+// Lobby: join game
+// ---------------------------------------------------------------------------
+async function joinGame(gameId) {
+    try {
+        await apiFetch(`/games/${gameId}/join`, {
+            method: 'POST',
+            body: JSON.stringify({}),
+        });
+        await loadLobby();
+    } catch (err) {
+        alert(`Failed to join game: ${err.message}`);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Lobby: delete game
+// ---------------------------------------------------------------------------
+async function deleteGame(gameId, gameName) {
+    const ok = confirm(`Delete lobby game "${gameName}"? This cannot be undone.`);
+    if (!ok) return;
+    try {
+        await apiFetch(`/games/${gameId}`, { method: 'DELETE' });
+        await loadLobby();
+    } catch (err) {
+        alert(`Failed to delete game: ${err.message}`);
+    }
+}
 
 // ---------------------------------------------------------------------------
 // Lobby: start game

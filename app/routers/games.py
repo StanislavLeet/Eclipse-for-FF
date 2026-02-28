@@ -25,6 +25,7 @@ from app.schemas.game import (
 from app.services.game_service import (
     create_game,
     create_invite,
+    delete_lobby_game,
     get_game,
     get_players_for_game,
     list_games_for_user,
@@ -111,6 +112,21 @@ async def get_game_info(
     game = await _get_game_or_404(db, game_id)
     players = await get_players_for_game(db, game.id)
     return _game_response(game, players)
+
+
+@router.delete("/{game_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_game_endpoint(
+    game_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    game = await _get_game_or_404(db, game_id)
+    if game.host_user_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the host can delete the game")
+    if game.status != GameStatus.lobby:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only lobby games can be deleted")
+    await delete_lobby_game(db, game)
+
 
 
 @router.post("/{game_id}/invite", response_model=InviteResponse, status_code=status.HTTP_201_CREATED)

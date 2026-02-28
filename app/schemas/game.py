@@ -60,7 +60,7 @@ class InviteResponse(BaseModel):
 
 
 class JoinGame(BaseModel):
-    token: str
+    token: str | None = None
 
 
 class SelectSpecies(BaseModel):

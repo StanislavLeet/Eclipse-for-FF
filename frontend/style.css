@@ -910,3 +910,12 @@ a:hover {
         display: none;
     }
 }
+
+.btn-danger {
+    background: #7a2531;
+    color: #fff;
+}
+
+.btn-danger:hover {
+    background: #972d3c;
+}
