@@ -41,6 +41,7 @@ class GameResponse(BaseModel):
     host_user_id: Optional[int]
     created_at: datetime
     players: list[PlayerResponse] = []
+    deletion_status: "GameDeletionStatusResponse | None" = None
 
     model_config = {"from_attributes": True}
 
@@ -158,3 +159,12 @@ class HexTileResponse(BaseModel):
     ships: list[ShipOnTileResponse] = []
 
     model_config = {"from_attributes": True}
+
+
+class GameDeletionStatusResponse(BaseModel):
+    request_id: int
+    status: str
+    requested_by_user_id: int
+    pending_approvals: int
+    is_current_user_approved: bool
+    can_current_user_approve: bool
