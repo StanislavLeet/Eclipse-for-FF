@@ -462,3 +462,72 @@ class TestStartGame:
         resp = await db_client.post(f"/games/{game['id']}/start", headers=auth_headers(host_token))
         assert resp.status_code == 400
         assert "species" in resp.json()["detail"].lower()
+
+
+# ---- game deletion ----------------------------------------------------------
+
+class TestDeleteGame:
+    async def test_host_can_delete_lobby_game_immediately(self, db_client: AsyncClient):
+        host_token = await register_and_login(db_client, "dlhost@example.com", "dlhost")
+        game = await create_game(db_client, host_token)
+
+        delete_resp = await db_client.delete(f"/games/{game['id']}", headers=auth_headers(host_token))
+        assert delete_resp.status_code == 200
+        assert delete_resp.json()["detail"] == "Game deleted"
+
+        check_resp = await db_client.get(f"/games/{game['id']}", headers=auth_headers(host_token))
+        assert check_resp.status_code == 404
+
+    async def test_non_host_cannot_delete_lobby_game(self, db_client: AsyncClient):
+        host_token = await register_and_login(db_client, "dlhost2@example.com", "dlhost2")
+        other_token = await register_and_login(db_client, "dlother2@example.com", "dlother2")
+        game = await create_game(db_client, host_token)
+
+        delete_resp = await db_client.delete(f"/games/{game['id']}", headers=auth_headers(other_token))
+        assert delete_resp.status_code == 403
+
+    async def test_active_game_deleted_after_all_players_approve(self, db_client: AsyncClient):
+        host_token = await register_and_login(db_client, "da-host@example.com", "dahost")
+        player_token = await register_and_login(db_client, "da-player@example.com", "daplayer")
+        game = await create_game(db_client, host_token, max_players=2)
+
+        invite_resp = await db_client.post(
+            f"/games/{game['id']}/invite",
+            json={"invitee_email": "da-player@example.com"},
+            headers=auth_headers(host_token),
+        )
+        join_token = invite_resp.json()["token"]
+        await db_client.post(
+            f"/games/{game['id']}/join",
+            json={"token": join_token},
+            headers=auth_headers(player_token),
+        )
+        await db_client.post(
+            f"/games/{game['id']}/select-species",
+            json={"species": "human"},
+            headers=auth_headers(host_token),
+        )
+        await db_client.post(
+            f"/games/{game['id']}/select-species",
+            json={"species": "planta"},
+            headers=auth_headers(player_token),
+        )
+        await db_client.post(f"/games/{game['id']}/start", headers=auth_headers(host_token))
+
+        request_resp = await db_client.delete(f"/games/{game['id']}", headers=auth_headers(host_token))
+        assert request_resp.status_code == 200
+        assert request_resp.json()["detail"] == "Deletion request sent to players"
+
+        game_resp = await db_client.get(f"/games/{game['id']}", headers=auth_headers(player_token))
+        assert game_resp.status_code == 200
+        assert game_resp.json()["deletion_status"]["pending_approvals"] == 1
+
+        approve_resp = await db_client.post(
+            f"/games/{game['id']}/delete/approve",
+            headers=auth_headers(player_token),
+        )
+        assert approve_resp.status_code == 200
+        assert approve_resp.json()["detail"] == "Game deleted"
+
+        check_resp = await db_client.get(f"/games/{game['id']}", headers=auth_headers(host_token))
+        assert check_resp.status_code == 404

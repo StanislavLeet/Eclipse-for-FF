@@ -281,6 +281,29 @@ function buildGameCard(game) {
             inviteBtn.addEventListener('click', function () { openInviteModal(game.id); });
             actionsEl.appendChild(inviteBtn);
         }
+        if (Number(game.host_user_id) === Number(state.currentUser?.id)) {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.className = 'btn-secondary';
+            deleteBtn.addEventListener('click', function () { deleteGame(game.id, game.name); });
+            actionsEl.appendChild(deleteBtn);
+        }
+    }
+
+    if (gameStatus !== 'lobby' && Number(game.host_user_id) === Number(state.currentUser?.id) && !game.deletion_status) {
+        const requestDeleteBtn = document.createElement('button');
+        requestDeleteBtn.textContent = 'Request Deletion';
+        requestDeleteBtn.className = 'btn-secondary';
+        requestDeleteBtn.addEventListener('click', function () { deleteGame(game.id, game.name); });
+        actionsEl.appendChild(requestDeleteBtn);
+    }
+
+    if (gameStatus !== 'lobby' && game.deletion_status && game.deletion_status.can_current_user_approve) {
+        const approveBtn = document.createElement('button');
+        approveBtn.textContent = 'Approve Deletion';
+        approveBtn.className = 'btn-secondary';
+        approveBtn.addEventListener('click', function () { approveGameDeletion(game.id, game.name); });
+        actionsEl.appendChild(approveBtn);
     }
 
     // Open game button for active/finished games
@@ -501,6 +524,36 @@ async function startGame(gameId) {
         await openGame(gameId);
     } catch (err) {
         alert(`Failed to start game: ${err.message}`);
+    }
+}
+
+async function deleteGame(gameId, gameName) {
+    if (!confirm(`Delete game "${gameName}"?`)) return;
+    try {
+        const response = await apiFetch(`/games/${gameId}`, { method: 'DELETE' });
+        alert(response.detail || 'Delete request sent');
+        if (state.currentGame && Number(state.currentGame.id) === Number(gameId)) {
+            state.currentGame = null;
+            showSection('lobby-section');
+        }
+        await loadLobby();
+    } catch (err) {
+        alert(`Failed to delete game: ${err.message}`);
+    }
+}
+
+async function approveGameDeletion(gameId, gameName) {
+    if (!confirm(`Approve deletion for game "${gameName}"?`)) return;
+    try {
+        const response = await apiFetch(`/games/${gameId}/delete/approve`, { method: 'POST' });
+        alert(response.detail || 'Deletion approved');
+        if (response.detail === 'Game deleted' && state.currentGame && Number(state.currentGame.id) === Number(gameId)) {
+            state.currentGame = null;
+            showSection('lobby-section');
+        }
+        await loadLobby();
+    } catch (err) {
+        alert(`Failed to approve deletion: ${err.message}`);
     }
 }
 
