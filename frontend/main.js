@@ -231,14 +231,15 @@ function buildGameCard(game) {
     const card = document.createElement('div');
     card.className = 'game-card';
 
+    const gameStatus = String(game.status || 'lobby').toLowerCase();
     const playerCount = (game.players || []).length;
-    const statusClass = `game-status-${game.status || 'lobby'}`;
+    const statusClass = `game-status-${gameStatus}`;
 
     card.innerHTML =
         '<div class="game-card-info">' +
             `<div class="game-card-name">${escapeHtml(game.name)}</div>` +
             '<div class="game-card-meta">' +
-                `<span class="${statusClass}">${(game.status || 'lobby').toUpperCase()}</span>` +
+                `<span class="${statusClass}">${gameStatus.toUpperCase()}</span>` +
                 ` &middot; ${playerCount}/${game.max_players || '?'} players` +
                 (game.current_round ? ` &middot; Round ${game.current_round}` : '') +
             '</div>' +
@@ -247,10 +248,10 @@ function buildGameCard(game) {
 
     const actionsEl = card.querySelector('.game-card-actions');
 
-    if (game.status === 'lobby') {
+    if (gameStatus === 'lobby') {
         // Select species button (if player is already in the game)
         const myPlayer = (game.players || []).find(function (p) {
-            return state.currentUser && p.user_id === state.currentUser.id;
+            return state.currentUser && Number(p.user_id) === Number(state.currentUser.id);
         });
         if (!myPlayer) {
             const joinBtn = document.createElement('button');
@@ -266,7 +267,7 @@ function buildGameCard(game) {
             actionsEl.appendChild(speciesBtn);
         }
         // Start game button for host (first player)
-        if (myPlayer && myPlayer.turn_order === 1) {
+        if (myPlayer && Number(game.host_user_id) === Number(state.currentUser?.id)) {
             const startBtn = document.createElement('button');
             startBtn.textContent = 'Start';
             startBtn.addEventListener('click', function () { startGame(game.id); });
@@ -283,7 +284,7 @@ function buildGameCard(game) {
     }
 
     // Open game button for active/finished games
-    if (game.status !== 'lobby') {
+    if (gameStatus !== 'lobby') {
         const openBtn = document.createElement('button');
         openBtn.textContent = game.status === 'finished' ? 'View' : 'Play';
         openBtn.addEventListener('click', function () { openGame(game.id); });
