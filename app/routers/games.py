@@ -11,6 +11,7 @@ from app.models.player import Species
 from app.models.user import User
 from app.schemas.game import (
     GameCreate,
+    GameDeletionStatusResponse,
     GameResponse,
     GameStatusResponse,
     HexTileResponse,
@@ -26,12 +27,16 @@ from app.schemas.game import (
     SystemResponse,
 )
 from app.services.game_service import (
+    approve_game_deletion,
     create_game,
     create_invite,
     get_game,
+    get_game_deletion_approvals,
+    get_game_deletion_request,
     get_players_for_game,
     list_games_for_user,
     join_game,
+    request_or_approve_game_deletion,
     select_species,
     start_game,
 )
@@ -41,7 +46,29 @@ from app.services.ship_service import get_ships_for_tile
 router = APIRouter(prefix="/games", tags=["games"])
 
 
-def _game_response(game, players) -> GameResponse:
+
+async def _build_deletion_status(
+    db: AsyncSession, game_id: int, current_user_id: int
+) -> GameDeletionStatusResponse | None:
+    request = await get_game_deletion_request(db, game_id)
+    if request is None:
+        return None
+
+    approvals = await get_game_deletion_approvals(db, request.id)
+    pending = sum(1 for approval in approvals if not approval.approved)
+    current = next((approval for approval in approvals if approval.user_id == current_user_id), None)
+
+    return GameDeletionStatusResponse(
+        request_id=request.id,
+        status=request.status.value,
+        requested_by_user_id=request.requested_by_user_id,
+        pending_approvals=pending,
+        is_current_user_approved=bool(current and current.approved),
+        can_current_user_approve=current is not None and not current.approved,
+    )
+
+
+async def _game_response_for_user(db: AsyncSession, game, players, current_user_id: int) -> GameResponse:
     return GameResponse(
         id=game.id,
         name=game.name,
@@ -52,8 +79,8 @@ def _game_response(game, players) -> GameResponse:
         host_user_id=game.host_user_id,
         created_at=game.created_at,
         players=[PlayerResponse.model_validate(p) for p in players],
+        deletion_status=await _build_deletion_status(db, game.id, current_user_id),
     )
-
 
 async def _get_game_or_404(db: AsyncSession, game_id: int):
     game = await get_game(db, game_id)
@@ -91,7 +118,7 @@ async def list_games(
     responses: list[GameResponse] = []
     for game in games:
         players = await get_players_for_game(db, game.id)
-        responses.append(_game_response(game, players))
+        responses.append(await _game_response_for_user(db, game, players, current_user.id))
     return responses
 
 @router.post("", response_model=GameResponse, status_code=status.HTTP_201_CREATED)
@@ -102,7 +129,7 @@ async def create_new_game(
 ):
     game = await create_game(db, name=body.name, max_players=body.max_players, host=current_user)
     players = await get_players_for_game(db, game.id)
-    return _game_response(game, players)
+    return await _game_response_for_user(db, game, players, current_user.id)
 
 
 @router.get("/{game_id}", response_model=GameResponse)
@@ -113,7 +140,7 @@ async def get_game_info(
 ):
     game = await _get_game_or_404(db, game_id)
     players = await get_players_for_game(db, game.id)
-    return _game_response(game, players)
+    return await _game_response_for_user(db, game, players, current_user.id)
 
 
 @router.post("/{game_id}/invite", response_model=InviteResponse, status_code=status.HTTP_201_CREATED)
@@ -200,7 +227,52 @@ async def start_game_endpoint(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     players = await get_players_for_game(db, game.id)
-    return _game_response(game, players)
+    return await _game_response_for_user(db, game, players, current_user.id)
+
+
+
+
+@router.delete("/{game_id}")
+async def request_delete_game(
+    game_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    game = await _get_game_or_404(db, game_id)
+
+    if game.status == GameStatus.lobby:
+        if game.host_user_id != current_user.id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only host can delete lobby game")
+        request, deleted = await request_or_approve_game_deletion(db, game=game, user=current_user)
+        if deleted:
+            return {"detail": "Game deleted"}
+        return {"detail": "Deletion request created", "request_id": request.id}
+
+    try:
+        request, deleted = await request_or_approve_game_deletion(db, game=game, user=current_user)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    if deleted:
+        return {"detail": "Game deleted"}
+    return {"detail": "Deletion request sent to players", "request_id": request.id}
+
+
+@router.post("/{game_id}/delete/approve")
+async def approve_delete_game(
+    game_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    game = await _get_game_or_404(db, game_id)
+    try:
+        request, deleted = await approve_game_deletion(db, game=game, user=current_user)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    if deleted:
+        return {"detail": "Game deleted"}
+    return {"detail": "Deletion approved", "request_id": request.id}
 
 
 @router.get("/{game_id}/status", response_model=GameStatusResponse)

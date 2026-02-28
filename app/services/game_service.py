@@ -1,9 +1,13 @@
 import secrets
 
-from sqlalchemy import or_, select
+from datetime import datetime, timezone
+
+from sqlalchemy import delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.game import Game, GameStatus
+from app.models.game_action import GameAction
+from app.models.game_deletion import GameDeletionApproval, GameDeletionRequest, GameDeletionRequestStatus
 from app.models.game_invite import GameInvite
 from app.models.player import Player, Species
 from app.models.user import User
@@ -167,3 +171,137 @@ async def start_game(db: AsyncSession, game: Game, user: User) -> Game:
     await notify_game_started(db, game, players)
 
     return game
+
+
+async def get_game_deletion_request(db: AsyncSession, game_id: int) -> GameDeletionRequest | None:
+    result = await db.execute(
+        select(GameDeletionRequest).where(GameDeletionRequest.game_id == game_id)
+    )
+    return result.scalar_one_or_none()
+
+
+async def get_game_deletion_approvals(
+    db: AsyncSession, request_id: int
+) -> list[GameDeletionApproval]:
+    result = await db.execute(
+        select(GameDeletionApproval).where(GameDeletionApproval.request_id == request_id)
+    )
+    return list(result.scalars().all())
+
+
+async def request_or_approve_game_deletion(
+    db: AsyncSession, game: Game, user: User
+) -> tuple[GameDeletionRequest, bool]:
+    if game.host_user_id != user.id:
+        raise ValueError("Only the host can request game deletion")
+
+    players = await get_players_for_game(db, game.id)
+    user_ids = {p.user_id for p in players}
+
+    request = await get_game_deletion_request(db, game.id)
+    if request is None:
+        request = GameDeletionRequest(
+            game_id=game.id,
+            requested_by_user_id=user.id,
+            status=GameDeletionRequestStatus.pending,
+        )
+        db.add(request)
+        await db.flush()
+
+        for uid in user_ids:
+            db.add(
+                GameDeletionApproval(
+                    request_id=request.id,
+                    user_id=uid,
+                    approved=(uid == user.id),
+                    approved_at=datetime.now(timezone.utc) if uid == user.id else None,
+                )
+            )
+        await db.flush()
+    else:
+        if request.requested_by_user_id != user.id:
+            raise ValueError("Deletion request already exists and was not created by this host")
+
+    deleted = await _delete_game_if_all_approved(db, game, request)
+    if not deleted:
+        await db.commit()
+        await db.refresh(request)
+    return request, deleted
+
+
+async def approve_game_deletion(
+    db: AsyncSession, game: Game, user: User
+) -> tuple[GameDeletionRequest, bool]:
+    request = await get_game_deletion_request(db, game.id)
+    if request is None:
+        raise ValueError("Deletion request was not created")
+
+    result = await db.execute(
+        select(GameDeletionApproval).where(
+            GameDeletionApproval.request_id == request.id,
+            GameDeletionApproval.user_id == user.id,
+        )
+    )
+    approval = result.scalar_one_or_none()
+    if approval is None:
+        raise ValueError("Only game players can approve deletion")
+
+    approval.approved = True
+    approval.approved_at = datetime.now(timezone.utc)
+
+    deleted = await _delete_game_if_all_approved(db, game, request)
+    if not deleted:
+        await db.commit()
+        await db.refresh(request)
+    return request, deleted
+
+
+async def _delete_game_if_all_approved(
+    db: AsyncSession, game: Game, request: GameDeletionRequest
+) -> bool:
+    approvals = await get_game_deletion_approvals(db, request.id)
+    if not approvals or any(not a.approved for a in approvals):
+        return False
+
+    player_ids = [p.id for p in await get_players_for_game(db, game.id)]
+
+    await db.execute(delete(GameAction).where(GameAction.game_id == game.id))
+
+    from app.models.combat_log import CombatLog
+    from app.models.council import CouncilState
+    from app.models.discovery_tile import DiscoveryTile
+    from app.models.game_invite import GameInvite
+    from app.models.hex_tile import HexTile
+    from app.models.planet_population import PlanetPopulation
+    from app.models.player_resources import PlayerResources
+    from app.models.player_technology import PlayerTechnology
+    from app.models.ship import Ship
+    from app.models.ship_blueprint import ShipBlueprint
+    from app.models.system import System
+
+    if player_ids:
+        await db.execute(delete(PlayerResources).where(PlayerResources.player_id.in_(player_ids)))
+        await db.execute(delete(PlayerTechnology).where(PlayerTechnology.player_id.in_(player_ids)))
+        await db.execute(delete(ShipBlueprint).where(ShipBlueprint.player_id.in_(player_ids)))
+        await db.execute(delete(PlanetPopulation).where(PlanetPopulation.owner_player_id.in_(player_ids)))
+
+    await db.execute(delete(CombatLog).where(CombatLog.game_id == game.id))
+    await db.execute(delete(CouncilState).where(CouncilState.game_id == game.id))
+    await db.execute(delete(DiscoveryTile).where(DiscoveryTile.game_id == game.id))
+    await db.execute(delete(GameInvite).where(GameInvite.game_id == game.id))
+    await db.execute(delete(Ship).where(Ship.game_id == game.id))
+
+    tile_ids_result = await db.execute(select(HexTile.id).where(HexTile.game_id == game.id))
+    tile_ids = [row[0] for row in tile_ids_result.all()]
+    if tile_ids:
+        await db.execute(delete(System).where(System.hex_tile_id.in_(tile_ids)))
+
+    await db.execute(delete(HexTile).where(HexTile.game_id == game.id))
+    await db.execute(delete(Player).where(Player.game_id == game.id))
+
+    await db.execute(delete(GameDeletionApproval).where(GameDeletionApproval.request_id == request.id))
+    await db.execute(delete(GameDeletionRequest).where(GameDeletionRequest.id == request.id))
+
+    await db.delete(game)
+    await db.commit()
+    return True
