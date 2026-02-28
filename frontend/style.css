@@ -312,6 +312,9 @@ a:hover {
     padding: 0.75rem;
     cursor: pointer;
     transition: border-color 0.15s, background 0.15s;
+    width: 100%;
+    text-align: left;
+    color: inherit;
 }
 
 .species-card:hover {

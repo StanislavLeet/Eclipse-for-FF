@@ -1,3 +1,5 @@
+import random
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -5,6 +7,7 @@ from app.data.species import list_species
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.game import GameStatus
+from app.models.player import Species
 from app.models.user import User
 from app.schemas.game import (
     GameCreate,
@@ -156,8 +159,28 @@ async def select_player_species(
     game = await _get_game_or_404(db, game_id)
     if game.status != GameStatus.lobby:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Game is not in lobby")
+    players = await get_players_for_game(db, game.id)
+    requested_species = body.species
+    if requested_species == "random":
+        taken_species = {
+            p.species
+            for p in players
+            if p.species is not None and p.species != Species.human
+        }
+        available_species = [
+            species for species in Species if species not in taken_species
+        ]
+        if not available_species:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No species available for random selection",
+            )
+        species = random.choice(available_species)
+    else:
+        species = Species(requested_species)
+
     try:
-        player = await select_species(db, game=game, user=current_user, species=body.species)
+        player = await select_species(db, game=game, user=current_user, species=species)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     return player

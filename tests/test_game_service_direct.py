@@ -239,16 +239,28 @@ class TestSelectSpeciesDirect:
         player = await select_species(db_session, game, host, Species.human)
         assert player.species == Species.human
 
-    async def test_select_species_duplicate_raises(self, db_session: AsyncSession):
+    async def test_select_species_duplicate_non_human_raises(self, db_session: AsyncSession):
         host = await _make_user(db_session, "ss2_h")
         joiner = await _make_user(db_session, "ss2_j")
         game = await create_game(db_session, "SSGame2", max_players=2, host=host)
         invite = await create_invite(db_session, game.id, joiner.email)
         await join_game(db_session, game, joiner, invite.token)
 
-        await select_species(db_session, game, host, Species.human)
+        await select_species(db_session, game, host, Species.planta)
         with pytest.raises(ValueError, match="[Aa]lready taken"):
-            await select_species(db_session, game, joiner, Species.human)
+            await select_species(db_session, game, joiner, Species.planta)
+
+
+    async def test_select_species_duplicate_human_allowed(self, db_session: AsyncSession):
+        host = await _make_user(db_session, "ss2h_h")
+        joiner = await _make_user(db_session, "ss2h_j")
+        game = await create_game(db_session, "SSGame2h", max_players=2, host=host)
+        invite = await create_invite(db_session, game.id, joiner.email)
+        await join_game(db_session, game, joiner, invite.token)
+
+        await select_species(db_session, game, host, Species.human)
+        player = await select_species(db_session, game, joiner, Species.human)
+        assert player.species == Species.human
 
     async def test_select_species_not_in_game_raises(self, db_session: AsyncSession):
         host = await _make_user(db_session, "ss3_h")

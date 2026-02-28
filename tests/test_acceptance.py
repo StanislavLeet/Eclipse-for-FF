@@ -155,8 +155,8 @@ class TestFullGameSetup:
         assert data["current_phase"] == "activation"
         assert data["current_round"] == 1
 
-    async def test_duplicate_species_rejected(self, db_client: AsyncClient):
-        """Two players cannot pick the same species."""
+    async def test_duplicate_non_human_species_rejected(self, db_client: AsyncClient):
+        """Two players cannot pick the same non-human species."""
         t0 = await register_and_login(db_client, "dup_h@t.com", "dup_h")
         t1 = await register_and_login(db_client, "dup_j@t.com", "dup_j")
 
@@ -178,15 +178,51 @@ class TestFullGameSetup:
 
         await db_client.post(
             f"/games/{game_id}/select-species",
-            json={"species": "human"},
+            json={"species": "planta"},
             headers=auth(t0),
         )
         resp2 = await db_client.post(
             f"/games/{game_id}/select-species",
-            json={"species": "human"},
+            json={"species": "planta"},
             headers=auth(t1),
         )
         assert resp2.status_code == 400
+
+
+    async def test_duplicate_human_species_allowed(self, db_client: AsyncClient):
+        """Two players can both pick human."""
+        t0 = await register_and_login(db_client, "duph_h@t.com", "duph_h")
+        t1 = await register_and_login(db_client, "duph_j@t.com", "duph_j")
+
+        resp = await db_client.post(
+            "/games",
+            json={"name": "Dup Human Species Game", "max_players": 2},
+            headers=auth(t0),
+        )
+        game_id = resp.json()["id"]
+        inv = await db_client.post(
+            f"/games/{game_id}/invite",
+            json={"invitee_email": "duph_j@t.com"},
+            headers=auth(t0),
+        )
+        tok = inv.json()["token"]
+        await db_client.post(
+            f"/games/{game_id}/join", json={"token": tok}, headers=auth(t1)
+        )
+
+        r0 = await db_client.post(
+            f"/games/{game_id}/select-species",
+            json={"species": "human"},
+            headers=auth(t0),
+        )
+        assert r0.status_code == 200
+
+        r1 = await db_client.post(
+            f"/games/{game_id}/select-species",
+            json={"species": "human"},
+            headers=auth(t1),
+        )
+        assert r1.status_code == 200
 
     async def test_cannot_start_without_all_species(self, db_client: AsyncClient):
         """Game cannot start if not all players have chosen species."""
