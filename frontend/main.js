@@ -252,6 +252,12 @@ function buildGameCard(game) {
         const myPlayer = (game.players || []).find(function (p) {
             return state.currentUser && p.user_id === state.currentUser.id;
         });
+        if (!myPlayer) {
+            const joinBtn = document.createElement('button');
+            joinBtn.textContent = 'Join';
+            joinBtn.addEventListener('click', function () { joinGame(game.id); });
+            actionsEl.appendChild(joinBtn);
+        }
         if (myPlayer && !myPlayer.species) {
             const speciesBtn = document.createElement('button');
             speciesBtn.textContent = 'Pick Species';
@@ -266,12 +272,14 @@ function buildGameCard(game) {
             startBtn.addEventListener('click', function () { startGame(game.id); });
             actionsEl.appendChild(startBtn);
         }
-        // Invite button
-        const inviteBtn = document.createElement('button');
-        inviteBtn.textContent = 'Invite';
-        inviteBtn.className = 'btn-secondary';
-        inviteBtn.addEventListener('click', function () { openInviteModal(game.id); });
-        actionsEl.appendChild(inviteBtn);
+        // Invite button only for joined players
+        if (myPlayer) {
+            const inviteBtn = document.createElement('button');
+            inviteBtn.textContent = 'Invite';
+            inviteBtn.className = 'btn-secondary';
+            inviteBtn.addEventListener('click', function () { openInviteModal(game.id); });
+            actionsEl.appendChild(inviteBtn);
+        }
     }
 
     // Open game button for active/finished games
@@ -443,6 +451,21 @@ document.getElementById('invite-form')?.addEventListener('submit', async functio
         showFormError('invite-error', `Failed to send invite: ${err.message}`);
     }
 });
+
+// ---------------------------------------------------------------------------
+// Lobby: join game
+// ---------------------------------------------------------------------------
+async function joinGame(gameId) {
+    try {
+        await apiFetch(`/games/${gameId}/join`, {
+            method: 'POST',
+            body: JSON.stringify({}),
+        });
+        await loadLobby();
+    } catch (err) {
+        alert(`Failed to join game: ${err.message}`);
+    }
+}
 
 // ---------------------------------------------------------------------------
 // Lobby: start game
