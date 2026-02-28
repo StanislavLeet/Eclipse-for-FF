@@ -27,6 +27,7 @@ from app.services.game_service import (
     create_invite,
     get_game,
     get_players_for_game,
+    list_games_for_user,
     join_game,
     select_species,
     start_game,
@@ -75,6 +76,20 @@ async def get_species():
         for s in list_species()
     ]
 
+
+
+
+@router.get("", response_model=list[GameResponse])
+async def list_games(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    games = await list_games_for_user(db, current_user.id)
+    responses: list[GameResponse] = []
+    for game in games:
+        players = await get_players_for_game(db, game.id)
+        responses.append(_game_response(game, players))
+    return responses
 
 @router.post("", response_model=GameResponse, status_code=status.HTTP_201_CREATED)
 async def create_new_game(

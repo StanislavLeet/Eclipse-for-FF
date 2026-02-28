@@ -85,6 +85,41 @@ class TestCreateGame:
         assert resp.status_code == 422
 
 
+# ---- list games -------------------------------------------------------------
+
+class TestListGames:
+    async def test_list_games_success(self, db_client: AsyncClient):
+        token = await register_and_login(db_client, "lg1@example.com", "lguser1")
+        await create_game(db_client, token, name="Lobby One")
+
+        resp = await db_client.get("/games", headers=auth_headers(token))
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        assert data[0]["name"] == "Lobby One"
+
+    async def test_list_games_only_returns_games_for_current_user(self, db_client: AsyncClient):
+        token_a = await register_and_login(db_client, "lg2a@example.com", "lguser2a")
+        token_b = await register_and_login(db_client, "lg2b@example.com", "lguser2b")
+
+        await create_game(db_client, token_a, name="A Game")
+        await create_game(db_client, token_b, name="B Game")
+
+        resp_a = await db_client.get("/games", headers=auth_headers(token_a))
+        assert resp_a.status_code == 200
+        names_a = [g["name"] for g in resp_a.json()]
+        assert names_a == ["A Game"]
+
+        resp_b = await db_client.get("/games", headers=auth_headers(token_b))
+        assert resp_b.status_code == 200
+        names_b = [g["name"] for g in resp_b.json()]
+        assert names_b == ["B Game"]
+
+    async def test_list_games_unauthenticated(self, db_client: AsyncClient):
+        resp = await db_client.get("/games")
+        assert resp.status_code == 401
+
+
 # ---- get game ---------------------------------------------------------------
 
 class TestGetGame:

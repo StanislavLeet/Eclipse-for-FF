@@ -38,6 +38,16 @@ async def get_game(db: AsyncSession, game_id: int) -> Game | None:
     return result.scalar_one_or_none()
 
 
+async def list_games_for_user(db: AsyncSession, user_id: int) -> list[Game]:
+    result = await db.execute(
+        select(Game)
+        .join(Player, Player.game_id == Game.id)
+        .where(Player.user_id == user_id)
+        .order_by(Game.created_at.desc())
+    )
+    return list(result.scalars().all())
+
+
 async def get_players_for_game(db: AsyncSession, game_id: int) -> list[Player]:
     result = await db.execute(select(Player).where(Player.game_id == game_id))
     return list(result.scalars().all())
