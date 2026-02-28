@@ -6,6 +6,12 @@ Browser-based digital implementation of the [Eclipse: Second Dawn for the Galaxy
 
 ---
 
+## Локальная инструкция на русском
+
+Подробная пошаговая инструкция для локального запуска и проверки функциональности: [`docs/local-testing-setup-ru.md`](docs/local-testing-setup-ru.md).
+
+---
+
 ## Prerequisites
 
 - Python 3.11+
