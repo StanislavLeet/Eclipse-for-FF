@@ -6,6 +6,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
+from app.config import settings
 
 # Import Base so Alembic can detect model changes
 from app.models.base import Base  # noqa: F401
@@ -14,6 +15,9 @@ from app.models.base import Base  # noqa: F401
 import app.models  # noqa: F401 - registers all models with Base.metadata
 
 config = context.config
+
+# Keep Alembic connection string in sync with application settings/.env.
+config.set_main_option("sqlalchemy.url", settings.database_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
