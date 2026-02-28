@@ -98,7 +98,7 @@ class TestListGames:
         assert len(data) == 1
         assert data[0]["name"] == "Lobby One"
 
-    async def test_list_games_only_returns_games_for_current_user(self, db_client: AsyncClient):
+    async def test_list_games_includes_all_lobby_games(self, db_client: AsyncClient):
         token_a = await register_and_login(db_client, "lg2a@example.com", "lguser2a")
         token_b = await register_and_login(db_client, "lg2b@example.com", "lguser2b")
 
@@ -107,13 +107,13 @@ class TestListGames:
 
         resp_a = await db_client.get("/games", headers=auth_headers(token_a))
         assert resp_a.status_code == 200
-        names_a = [g["name"] for g in resp_a.json()]
-        assert names_a == ["A Game"]
+        names_a = {g["name"] for g in resp_a.json()}
+        assert names_a == {"A Game", "B Game"}
 
         resp_b = await db_client.get("/games", headers=auth_headers(token_b))
         assert resp_b.status_code == 200
-        names_b = [g["name"] for g in resp_b.json()]
-        assert names_b == ["B Game"]
+        names_b = {g["name"] for g in resp_b.json()}
+        assert names_b == {"A Game", "B Game"}
 
     async def test_list_games_unauthenticated(self, db_client: AsyncClient):
         resp = await db_client.get("/games")
@@ -203,6 +203,22 @@ class TestJoinGame:
         assert join_resp.status_code == 201
 
         # Verify player appears in game
+        game_resp = await db_client.get(f"/games/{game['id']}", headers=auth_headers(host_token))
+        assert len(game_resp.json()["players"]) == 2
+
+
+    async def test_join_success_without_invite_token(self, db_client: AsyncClient):
+        host_token = await register_and_login(db_client, "jhost-open@example.com", "jhostopen")
+        player_token = await register_and_login(db_client, "jplayer-open@example.com", "jplayeropen")
+        game = await create_game(db_client, host_token)
+
+        join_resp = await db_client.post(
+            f"/games/{game['id']}/join",
+            json={},
+            headers=auth_headers(player_token),
+        )
+        assert join_resp.status_code == 201
+
         game_resp = await db_client.get(f"/games/{game['id']}", headers=auth_headers(host_token))
         assert len(game_resp.json()["players"]) == 2
 

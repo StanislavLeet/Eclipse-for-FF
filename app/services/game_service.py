@@ -1,6 +1,6 @@
 import secrets
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.game import Game, GameStatus
@@ -41,11 +41,11 @@ async def get_game(db: AsyncSession, game_id: int) -> Game | None:
 async def list_games_for_user(db: AsyncSession, user_id: int) -> list[Game]:
     result = await db.execute(
         select(Game)
-        .join(Player, Player.game_id == Game.id)
-        .where(Player.user_id == user_id)
+        .outerjoin(Player, Player.game_id == Game.id)
+        .where(or_(Game.status == GameStatus.lobby, Player.user_id == user_id))
         .order_by(Game.created_at.desc())
     )
-    return list(result.scalars().all())
+    return list(result.scalars().unique().all())
 
 
 async def get_players_for_game(db: AsyncSession, game_id: int) -> list[Player]:
@@ -76,13 +76,7 @@ async def get_invite_by_token(db: AsyncSession, token: str) -> GameInvite | None
     return result.scalar_one_or_none()
 
 
-async def join_game(db: AsyncSession, game: Game, user: User, token: str) -> Player:
-    invite = await get_invite_by_token(db, token)
-    if invite is None or invite.game_id != game.id:
-        raise ValueError("Invalid invite token")
-    if invite.accepted:
-        raise ValueError("Invite already used")
-
+async def join_game(db: AsyncSession, game: Game, user: User, token: str | None = None) -> Player:
     existing = await get_player_in_game(db, game.id, user.id)
     if existing is not None:
         raise ValueError("Already joined this game")
@@ -91,7 +85,14 @@ async def join_game(db: AsyncSession, game: Game, user: User, token: str) -> Pla
     if len(players) >= game.max_players:
         raise ValueError("Game is full")
 
-    invite.accepted = True
+    if token is not None:
+        invite = await get_invite_by_token(db, token)
+        if invite is None or invite.game_id != game.id:
+            raise ValueError("Invalid invite token")
+        if invite.accepted:
+            raise ValueError("Invite already used")
+        invite.accepted = True
+
     turn_order = len(players)
     player = Player(game_id=game.id, user_id=user.id, turn_order=turn_order)
     db.add(player)
