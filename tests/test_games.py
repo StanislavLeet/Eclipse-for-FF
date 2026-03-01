@@ -521,6 +521,29 @@ class TestDeleteGame:
         delete_resp = await db_client.delete(f"/games/{game['id']}", headers=auth_headers(other_token))
         assert delete_resp.status_code == 403
 
+    async def test_host_can_delete_multi_player_lobby_game_immediately(self, db_client: AsyncClient):
+        host_token = await register_and_login(db_client, "dlmulti-host@example.com", "dlmultihost")
+        player_token = await register_and_login(db_client, "dlmulti-player@example.com", "dlmultiplayer")
+        game = await create_game(db_client, host_token, max_players=2)
+
+        invite_resp = await db_client.post(
+            f"/games/{game['id']}/invite",
+            json={"invitee_email": "dlmulti-player@example.com"},
+            headers=auth_headers(host_token),
+        )
+        await db_client.post(
+            f"/games/{game['id']}/join",
+            json={"token": invite_resp.json()["token"]},
+            headers=auth_headers(player_token),
+        )
+
+        delete_resp = await db_client.delete(f"/games/{game['id']}", headers=auth_headers(host_token))
+        assert delete_resp.status_code == 200
+        assert delete_resp.json()["detail"] == "Game deleted"
+
+        check_resp = await db_client.get(f"/games/{game['id']}", headers=auth_headers(host_token))
+        assert check_resp.status_code == 404
+
     async def test_non_host_cannot_request_active_game_deletion(self, db_client: AsyncClient):
         host_token = await register_and_login(db_client, "da-nh@example.com", "danhost")
         player_token = await register_and_login(db_client, "da-np@example.com", "danplayer")

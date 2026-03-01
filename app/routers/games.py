@@ -30,6 +30,7 @@ from app.services.game_service import (
     approve_game_deletion,
     create_game,
     create_invite,
+    delete_game_directly,
     get_game,
     get_game_deletion_approvals,
     get_game_deletion_request,
@@ -243,10 +244,8 @@ async def request_delete_game(
     if game.status == GameStatus.lobby:
         if game.host_user_id != current_user.id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only host can delete lobby game")
-        request, deleted = await request_or_approve_game_deletion(db, game=game, user=current_user)
-        if deleted:
-            return {"detail": "Game deleted"}
-        return {"detail": "Deletion request created", "request_id": request.id}
+        await delete_game_directly(db, game=game)
+        return {"detail": "Game deleted"}
 
     if game.host_user_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only host can request game deletion")

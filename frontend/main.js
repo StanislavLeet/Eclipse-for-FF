@@ -480,7 +480,7 @@ document.getElementById('invite-form')?.addEventListener('submit', async functio
     try {
         await apiFetch(`/games/${_inviteTargetGameId}/invite`, {
             method: 'POST',
-            body: JSON.stringify({ email }),
+            body: JSON.stringify({ invitee_email: email }),
         });
         document.getElementById('invite-modal')?.classList.add('hidden');
         document.getElementById('invite-form')?.reset();
@@ -587,11 +587,11 @@ async function openGame(gameId) {
         // Turn banner
         if (typeof Actions !== 'undefined') {
             const isMyTurn = myPlayer ? myPlayer.is_active_turn : false;
-            if (gameData.active_player_id) {
-                const activePl = (gameData.players || []).find(function (p) {
-                    return p.id === gameData.active_player_id;
-                });
-                const name = activePl ? (activePl.username || 'Unknown') : 'Unknown';
+            const activePl = (gameData.players || []).find(function (p) {
+                return p.is_active_turn;
+            });
+            if (activePl) {
+                const name = activePl.username || 'Unknown';
                 Actions.showTurnBanner(
                     isMyTurn ? 'Your turn!' : `${name}'s turn`,
                     isMyTurn

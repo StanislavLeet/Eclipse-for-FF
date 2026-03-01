@@ -173,6 +173,47 @@ async def start_game(db: AsyncSession, game: Game, user: User) -> Game:
     return game
 
 
+async def delete_game_directly(db: AsyncSession, game: Game) -> None:
+    """Delete a game and all its associated data without an approval workflow."""
+    from app.models.combat_log import CombatLog
+    from app.models.council import CouncilState
+    from app.models.discovery_tile import DiscoveryTile
+    from app.models.game_invite import GameInvite
+    from app.models.hex_tile import HexTile
+    from app.models.planet_population import PlanetPopulation
+    from app.models.player_resources import PlayerResources
+    from app.models.player_technology import PlayerTechnology
+    from app.models.ship import Ship
+    from app.models.ship_blueprint import ShipBlueprint
+    from app.models.system import System
+
+    player_ids = [p.id for p in await get_players_for_game(db, game.id)]
+
+    await db.execute(delete(GameAction).where(GameAction.game_id == game.id))
+
+    if player_ids:
+        await db.execute(delete(PlayerResources).where(PlayerResources.player_id.in_(player_ids)))
+        await db.execute(delete(PlayerTechnology).where(PlayerTechnology.player_id.in_(player_ids)))
+        await db.execute(delete(ShipBlueprint).where(ShipBlueprint.player_id.in_(player_ids)))
+        await db.execute(delete(PlanetPopulation).where(PlanetPopulation.owner_player_id.in_(player_ids)))
+
+    await db.execute(delete(CombatLog).where(CombatLog.game_id == game.id))
+    await db.execute(delete(CouncilState).where(CouncilState.game_id == game.id))
+    await db.execute(delete(DiscoveryTile).where(DiscoveryTile.game_id == game.id))
+    await db.execute(delete(GameInvite).where(GameInvite.game_id == game.id))
+    await db.execute(delete(Ship).where(Ship.game_id == game.id))
+
+    tile_ids_result = await db.execute(select(HexTile.id).where(HexTile.game_id == game.id))
+    tile_ids = [row[0] for row in tile_ids_result.all()]
+    if tile_ids:
+        await db.execute(delete(System).where(System.hex_tile_id.in_(tile_ids)))
+
+    await db.execute(delete(HexTile).where(HexTile.game_id == game.id))
+    await db.execute(delete(Player).where(Player.game_id == game.id))
+    await db.delete(game)
+    await db.commit()
+
+
 async def get_game_deletion_request(db: AsyncSession, game_id: int) -> GameDeletionRequest | None:
     result = await db.execute(
         select(GameDeletionRequest).where(GameDeletionRequest.game_id == game_id)
