@@ -290,7 +290,7 @@ function buildGameCard(game) {
         }
     }
 
-    if (gameStatus !== 'lobby' && game.deletion_status && game.deletion_status.can_current_user_approve) {
+    if (game.deletion_status && game.deletion_status.can_current_user_approve) {
         const approveBtn = document.createElement('button');
         approveBtn.textContent = 'Approve Deletion';
         approveBtn.className = 'btn-secondary';
@@ -300,6 +300,13 @@ function buildGameCard(game) {
 
     // Open game button for active/finished games
     if (gameStatus !== 'lobby') {
+        if (Number(game.host_user_id) === Number(state.currentUser?.id) && !game.deletion_status) {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.className = 'btn-secondary';
+            deleteBtn.addEventListener('click', function () { deleteGame(game.id, game.name); });
+            actionsEl.appendChild(deleteBtn);
+        }
         const openBtn = document.createElement('button');
         openBtn.textContent = game.status === 'finished' ? 'View' : 'Play';
         openBtn.addEventListener('click', function () { openGame(game.id); });
@@ -372,7 +379,6 @@ const SPECIES_LIST = [
     { id: 'terran_directorate', name: 'Terran Directorate', desc: 'Economic powerhouse with trade bonuses.' },
 ];
 
-const PICKABLE_SPECIES_IDS = SPECIES_LIST.filter(function (sp) { return sp.id !== 'random'; }).map(function (sp) { return sp.id; });
 let _speciesTargetGameId = null;
 let _selectedSpeciesId = null;
 
@@ -384,12 +390,6 @@ function setSelectedSpecies(speciesId) {
     });
     const confirmBtn = document.getElementById('confirm-species');
     if (confirmBtn) confirmBtn.disabled = !_selectedSpeciesId;
-}
-
-function resolveSpeciesSelection(speciesId) {
-    if (speciesId !== 'random') return speciesId;
-    if (PICKABLE_SPECIES_IDS.length === 0) return null;
-    return PICKABLE_SPECIES_IDS[Math.floor(Math.random() * PICKABLE_SPECIES_IDS.length)];
 }
 
 function openSpeciesPicker(gameId) {
@@ -437,8 +437,7 @@ document.getElementById('cancel-species')?.addEventListener('click', function ()
 });
 
 document.getElementById('confirm-species')?.addEventListener('click', async function () {
-    const resolvedSpecies = resolveSpeciesSelection(_selectedSpeciesId);
-    await confirmSpeciesSelection(resolvedSpecies);
+    await confirmSpeciesSelection(_selectedSpeciesId);
 });
 
 // Close species modal when clicking outside the dialog

@@ -682,7 +682,8 @@ class TestScoresEndpoint:
         assert resp.status_code == 200
         data = resp.json()
         # Response contains game_id and players with VP info
-        assert "players" in data or "scores" in data or isinstance(data, list)
+        assert "players" in data
+        assert isinstance(data["players"], list)
 
     async def test_scores_game_not_found(self, db_client: AsyncClient):
         t = await register_and_login(db_client, "sc404@t.com", "sc404")

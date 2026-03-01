@@ -700,7 +700,8 @@ class TestMainJsTask17Structure:
     """Verify main.js has the new lobby integration and action handling code."""
 
     def _load_source(self):
-        return open(os.path.join(FRONTEND_DIR, "main.js")).read()
+        with open(os.path.join(FRONTEND_DIR, "main.js")) as f:
+            return f.read()
 
     def test_has_load_lobby(self):
         assert "loadLobby" in self._load_source()
@@ -721,7 +722,7 @@ class TestMainJsTask17Structure:
         assert "SPECIES_LIST" in self._load_source()
 
     def test_has_random_species_option(self):
-        assert "random" in self._load_source()
+        assert "id: 'random'" in self._load_source()
 
     def test_has_start_game(self):
         assert "startGame" in self._load_source()

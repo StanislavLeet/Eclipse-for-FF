@@ -248,6 +248,9 @@ async def request_delete_game(
             return {"detail": "Game deleted"}
         return {"detail": "Deletion request created", "request_id": request.id}
 
+    if game.host_user_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only host can request game deletion")
+
     try:
         request, deleted = await request_or_approve_game_deletion(db, game=game, user=current_user)
     except ValueError as e:

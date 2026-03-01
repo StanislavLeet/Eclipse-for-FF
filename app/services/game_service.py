@@ -85,10 +85,6 @@ async def join_game(db: AsyncSession, game: Game, user: User, token: str | None 
     if existing is not None:
         raise ValueError("Already joined this game")
 
-    players = await get_players_for_game(db, game.id)
-    if len(players) >= game.max_players:
-        raise ValueError("Game is full")
-
     if token is not None:
         invite = await get_invite_by_token(db, token)
         if invite is None or invite.game_id != game.id:
@@ -96,6 +92,10 @@ async def join_game(db: AsyncSession, game: Game, user: User, token: str | None 
         if invite.accepted:
             raise ValueError("Invite already used")
         invite.accepted = True
+
+    players = await get_players_for_game(db, game.id)
+    if len(players) >= game.max_players:
+        raise ValueError("Game is full")
 
     turn_order = len(players)
     player = Player(game_id=game.id, user_id=user.id, turn_order=turn_order)
