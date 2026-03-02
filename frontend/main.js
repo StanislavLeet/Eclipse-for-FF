@@ -223,7 +223,11 @@ async function loadLobby() {
             listEl.appendChild(card);
         }
     } catch (err) {
-        listEl.innerHTML = `<p class="panel-error">Failed to load games: ${err.message}</p>`;
+        const errEl = document.createElement('p');
+        errEl.className = 'panel-error';
+        errEl.textContent = `Failed to load games: ${err.message}`;
+        listEl.innerHTML = '';
+        listEl.appendChild(errEl);
     }
 }
 

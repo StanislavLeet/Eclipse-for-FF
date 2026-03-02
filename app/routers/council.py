@@ -63,6 +63,12 @@ async def get_council_state_endpoint(
     if game is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
 
+    requester = await get_player_in_game(db, game_id, current_user.id)
+    if requester is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You are not a player in this game"
+        )
+
     council = await get_or_create_council_state(db, game_id)
     await db.commit()
 

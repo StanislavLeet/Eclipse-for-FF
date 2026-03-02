@@ -64,6 +64,12 @@ async def get_action_history(
             detail="Game has not started yet",
         )
 
+    requester = await get_player_in_game(db, game_id, current_user.id)
+    if requester is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You are not a player in this game"
+        )
+
     actions = await get_game_actions(db, game_id)
     return actions
 

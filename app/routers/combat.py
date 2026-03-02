@@ -30,6 +30,12 @@ async def get_combat_logs_endpoint(
             detail="Game has not started yet",
         )
 
+    requester = await get_player_in_game(db, game_id, current_user.id)
+    if requester is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You are not a player in this game"
+        )
+
     logs = await get_combat_logs(game_id, db, round_number=round)
     return [
         {

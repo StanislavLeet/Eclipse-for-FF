@@ -7,7 +7,7 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.game import GameStatus
 from app.models.user import User
-from app.services.game_service import get_game, get_players_for_game
+from app.services.game_service import get_game, get_player_in_game, get_players_for_game
 from app.services.ship_service import (
     get_blueprints_for_player,
     get_ships_for_player,
@@ -32,6 +32,12 @@ async def get_player_blueprints(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Game has not started yet",
+        )
+
+    requester = await get_player_in_game(db, game_id, current_user.id)
+    if requester is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You are not a player in this game"
         )
 
     players = await get_players_for_game(db, game_id)
@@ -111,6 +117,12 @@ async def get_player_ships(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Game has not started yet",
+        )
+
+    requester = await get_player_in_game(db, game_id, current_user.id)
+    if requester is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You are not a player in this game"
         )
 
     players = await get_players_for_game(db, game_id)

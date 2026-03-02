@@ -11,7 +11,7 @@ from app.schemas.research import (
     PlayerTechnologyResponse,
     TechnologyDefinitionResponse,
 )
-from app.services.game_service import get_game, get_players_for_game
+from app.services.game_service import get_game, get_player_in_game, get_players_for_game
 from app.services.research_service import (
     calculate_effective_cost,
     count_techs_in_category,
@@ -39,6 +39,12 @@ async def get_player_technologies_endpoint(
     if game.status == GameStatus.lobby:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Game has not started yet"
+        )
+
+    requester = await get_player_in_game(db, game_id, current_user.id)
+    if requester is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You are not a player in this game"
         )
 
     players = await get_players_for_game(db, game_id)
@@ -92,6 +98,12 @@ async def get_available_technologies_endpoint(
     if game.status == GameStatus.lobby:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Game has not started yet"
+        )
+
+    requester = await get_player_in_game(db, game_id, current_user.id)
+    if requester is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You are not a player in this game"
         )
 
     players = await get_players_for_game(db, game_id)
