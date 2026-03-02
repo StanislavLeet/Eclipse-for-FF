@@ -29,7 +29,7 @@ from app.services.resource_service import (
 # ---------------------------------------------------------------------------
 
 async def register_and_login(
-    client: AsyncClient, email: str, username: str, password: str = "pass123"
+    client: AsyncClient, email: str, username: str, password: str = "testpass1"
 ) -> str:
     await client.post(
         "/auth/register",

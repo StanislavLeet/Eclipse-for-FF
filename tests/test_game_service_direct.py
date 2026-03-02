@@ -489,7 +489,7 @@ class TestTurnEngineDirect:
         # Manually set game to combat phase
         game.current_phase = GamePhase.combat
         with pytest.raises(ValueError, match="[Aa]ctivation"):
-            await validate_action(game, active, ActionType.pass_action)
+            validate_action(game, active, ActionType.pass_action)
 
     async def test_validate_action_not_your_turn_raises(
         self, db_session: AsyncSession
@@ -497,7 +497,7 @@ class TestTurnEngineDirect:
         game, players = await self._start_game(db_session, "va2")
         inactive = next(p for p in players if not p.is_active_turn)
         with pytest.raises(ValueError, match="not your turn"):
-            await validate_action(game, inactive, ActionType.pass_action)
+            validate_action(game, inactive, ActionType.pass_action)
 
     async def test_validate_action_already_passed_raises(
         self, db_session: AsyncSession
@@ -506,7 +506,7 @@ class TestTurnEngineDirect:
         active = next(p for p in players if p.is_active_turn)
         active.has_passed = True
         with pytest.raises(ValueError, match="[Aa]lready passed"):
-            await validate_action(game, active, ActionType.pass_action)
+            validate_action(game, active, ActionType.pass_action)
 
     async def test_submit_pass_action_marks_player_passed(
         self, db_session: AsyncSession
@@ -541,4 +541,4 @@ class TestTurnEngineDirect:
         await db_session.flush()
 
         with pytest.raises(ValueError, match="[Nn]ot active"):
-            await validate_action(game, player, ActionType.pass_action)
+            validate_action(game, player, ActionType.pass_action)

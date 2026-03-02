@@ -25,11 +25,6 @@ async def get_active_player(db: AsyncSession, game_id: int) -> Player | None:
     return result.scalar_one_or_none()
 
 
-async def get_players_for_game(db: AsyncSession, game_id: int) -> list[Player]:
-    result = await db.execute(select(Player).where(Player.game_id == game_id))
-    return list(result.scalars().all())
-
-
 async def get_game_actions(db: AsyncSession, game_id: int) -> list[GameAction]:
     result = await db.execute(
         select(GameAction)
@@ -56,7 +51,7 @@ async def initialize_turn_state(db: AsyncSession, game: Game) -> None:
     game.current_phase = GamePhase.activation
 
 
-async def validate_action(
+def validate_action(
     game: Game, player: Player, action_type: ActionType
 ) -> None:
     """Raise ValueError if the action is not legal given the current game state."""
@@ -78,7 +73,7 @@ async def submit_action(
     payload: dict[str, Any] | None = None,
 ) -> GameAction:
     """Record an action, update turn state, and trigger phase transitions if needed."""
-    await validate_action(game, player, action_type)
+    validate_action(game, player, action_type)
 
     # Non-pass actions consume one influence disc from the player's supply
     if action_type != ActionType.pass_action:

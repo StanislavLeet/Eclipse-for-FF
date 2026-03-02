@@ -368,7 +368,7 @@ class TestStaticServing:
             transport=ASGITransport(app=app), base_url="http://test"
         ) as client:
             resp = await client.get("/")
-        # Static files at "/" should return HTML or redirect
+        # Static files at "/" — no route defined, frontend served at /static/
         assert resp.status_code in (200, 301, 302, 307, 308, 404)
 
     async def test_health_endpoint(self):

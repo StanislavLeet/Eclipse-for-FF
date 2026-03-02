@@ -137,13 +137,13 @@ class TestTilesShareWormhole:
 async def _setup_two_player_game(db_client: AsyncClient) -> tuple[str, str, dict]:
     """Register two players, create and start a game, return tokens and game data."""
     # Register host
-    await db_client.post("/auth/register", json={"email": "mhost@example.com", "username": "mhost", "password": "pass123"})
-    host_resp = await db_client.post("/auth/login", json={"email": "mhost@example.com", "password": "pass123"})
+    await db_client.post("/auth/register", json={"email": "mhost@example.com", "username": "mhost", "password": "testpass1"})
+    host_resp = await db_client.post("/auth/login", json={"email": "mhost@example.com", "password": "testpass1"})
     host_token = host_resp.json()["access_token"]
 
     # Register player 2
-    await db_client.post("/auth/register", json={"email": "mp2@example.com", "username": "mp2", "password": "pass123"})
-    p2_resp = await db_client.post("/auth/login", json={"email": "mp2@example.com", "password": "pass123"})
+    await db_client.post("/auth/register", json={"email": "mp2@example.com", "username": "mp2", "password": "testpass1"})
+    p2_resp = await db_client.post("/auth/login", json={"email": "mp2@example.com", "password": "testpass1"})
     p2_token = p2_resp.json()["access_token"]
 
     def ah(t):
@@ -190,8 +190,8 @@ class TestMapGenerationForPlayerCounts:
         for i in range(n):
             email = f"u{n}_{i}@example.com"
             uname = f"u{n}i{i}"
-            await db_client.post("/auth/register", json={"email": email, "username": uname, "password": "pw"})
-            resp = await db_client.post("/auth/login", json={"email": email, "password": "pw"})
+            await db_client.post("/auth/register", json={"email": email, "username": uname, "password": "testpass1"})
+            resp = await db_client.post("/auth/login", json={"email": email, "password": "testpass1"})
             tokens.append(resp.json()["access_token"])
 
         def ah(t):
@@ -395,8 +395,8 @@ class TestMapGenerationForPlayerCounts:
 
 class TestGetMapEndpoint:
     async def test_map_unavailable_in_lobby(self, db_client: AsyncClient):
-        await db_client.post("/auth/register", json={"email": "lm@example.com", "username": "lmuser", "password": "pw"})
-        resp = await db_client.post("/auth/login", json={"email": "lm@example.com", "password": "pw"})
+        await db_client.post("/auth/register", json={"email": "lm@example.com", "username": "lmuser", "password": "testpass1"})
+        resp = await db_client.post("/auth/login", json={"email": "lm@example.com", "password": "testpass1"})
         token = resp.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
 

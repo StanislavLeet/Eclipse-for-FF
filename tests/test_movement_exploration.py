@@ -48,7 +48,7 @@ from app.services.movement_service import (
 # ---------------------------------------------------------------------------
 
 async def register_and_login(
-    client: AsyncClient, email: str, username: str, password: str = "pass123"
+    client: AsyncClient, email: str, username: str, password: str = "testpass1"
 ) -> str:
     await client.post(
         "/auth/register",
@@ -707,24 +707,24 @@ class TestExecuteExplore:
                 tile_with_w3 = (tid, tmpl)
                 break
 
-        if tile_with_w3:
-            target.tile_template_id = tile_with_w3[0]
-            await db_session.flush()
+        assert tile_with_w3 is not None, "No inner tile with wormhole 3 found in ALL_TILES"
+        target.tile_template_id = tile_with_w3[0]
+        await db_session.flush()
 
-            ship = await _make_ship(db_session, game.id, player.id, source.id)
+        ship = await _make_ship(db_session, game.id, player.id, source.id)
 
-            result = await execute_explore(
-                db=db_session,
-                game_id=game.id,
-                player_id=player.id,
-                ship_id=ship.id,
-                target_hex_id=target.id,
-            )
+        result = await execute_explore(
+            db=db_session,
+            game_id=game.id,
+            player_id=player.id,
+            ship_id=ship.id,
+            target_hex_id=target.id,
+        )
 
-            assert result["hex_revealed"] == target.id
-            await db_session.refresh(target)
-            assert target.is_explored is True
-            assert target.owner_player_id == player.id
+        assert result["hex_revealed"] == target.id
+        await db_session.refresh(target)
+        assert target.is_explored is True
+        assert target.owner_player_id == player.id
 
     async def test_explore_already_explored_hex_raises(self, db_session: AsyncSession):
         game, player = await _make_minimal_game_and_player(db_session)
@@ -781,20 +781,20 @@ class TestExecuteExplore:
                 tile_with_w3 = (tid, tmpl)
                 break
 
-        if tile_with_w3:
-            target = await _make_unexplored_hex(
-                db_session, game.id, 1, 0, template_id=tile_with_w3[0]
-            )
-            ship = await _make_ship(db_session, game.id, player.id, source.id)
+        assert tile_with_w3 is not None, "No inner tile with wormhole 3 found in ALL_TILES"
+        target = await _make_unexplored_hex(
+            db_session, game.id, 1, 0, template_id=tile_with_w3[0]
+        )
+        ship = await _make_ship(db_session, game.id, player.id, source.id)
 
-            with pytest.raises(ValueError, match="influence discs"):
-                await execute_explore(
-                    db=db_session,
-                    game_id=game.id,
-                    player_id=player.id,
-                    ship_id=ship.id,
-                    target_hex_id=target.id,
-                )
+        with pytest.raises(ValueError, match="influence discs"):
+            await execute_explore(
+                db=db_session,
+                game_id=game.id,
+                player_id=player.id,
+                ship_id=ship.id,
+                target_hex_id=target.id,
+            )
 
     async def test_explore_places_ancient_ships(self, db_session: AsyncSession):
         game, player = await _make_minimal_game_and_player(db_session)

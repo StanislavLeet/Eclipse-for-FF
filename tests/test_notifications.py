@@ -11,7 +11,7 @@ async def register_and_login(
     client: AsyncClient,
     email: str,
     username: str,
-    password: str = "pass123",
+    password: str = "testpass1",
 ) -> str:
     await client.post(
         "/auth/register",
@@ -137,8 +137,8 @@ class TestNotifyGameStarted:
         ) as mock_send:
             tokens, emails, game = await setup_started_game(db_client, num_players=2)
 
-        # One email per player
-        assert mock_send.call_count >= 2
+        # One email per player (2-player game)
+        assert mock_send.call_count == 2
         called_tos = [c.args[0] for c in mock_send.call_args_list]
         for email in emails:
             assert email in called_tos
@@ -185,8 +185,8 @@ class TestNotifyTurnChange:
             )
             assert resp.status_code == 201
 
-        # A notification email should have been sent
-        assert mock_send.call_count >= 1
+        # Exactly one email should be sent to the next player
+        assert mock_send.call_count == 1
 
     async def test_turn_change_email_contains_game_link(self, db_client: AsyncClient):
         tokens, emails, game = await setup_started_game(db_client, num_players=2)

@@ -162,28 +162,18 @@ async def _apply_tech_effects(
     for effect in tech.effects:
         if effect.effect_type == "income_bonus":
             params = effect.params
-            # Flat bonuses (no per-square condition) are applied immediately
-            if "flat" in params and not params.get("once"):
-                resource_name = params.get("resource", "")
-                flat_amount = params.get("flat", 0)
-                if resource_name == "science":
-                    resources.science += flat_amount
-                elif resource_name == "money":
-                    resources.money += flat_amount
-                elif resource_name == "materials":
-                    resources.materials += flat_amount
-            # One-time "gain immediately" bonuses
-            elif params.get("once") and "flat" in params:
-                resource_name = params.get("resource", "")
-                flat_amount = params.get("flat", 0)
-                if resource_name == "science":
-                    resources.science += flat_amount
-                elif resource_name == "money":
-                    resources.money += flat_amount
-                elif resource_name == "materials":
-                    resources.materials += flat_amount
+            # Flat bonuses (both ongoing and one-time) are applied immediately.
             # Per-planet income bonuses are applied during upkeep (Task 11+);
             # the tech record is the source of truth — no immediate effect here.
+            if "flat" in params:
+                resource_name = params.get("resource", "")
+                flat_amount = params.get("flat", 0)
+                if resource_name == "science":
+                    resources.science += flat_amount
+                elif resource_name == "money":
+                    resources.money += flat_amount
+                elif resource_name == "materials":
+                    resources.materials += flat_amount
     await db.flush()
 
 

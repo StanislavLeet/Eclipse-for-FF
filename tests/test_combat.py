@@ -479,7 +479,6 @@ def test_ancient_interceptor_stats():
 # find_contested_hex_ids (DB)
 # ---------------------------------------------------------------------------
 
-@pytest.mark.asyncio
 async def test_find_contested_hex_player_vs_ancient(db_session: AsyncSession):
     game, player_a, player_b = await _create_game_and_players(db_session, "contest1")
     hex_tile = await _create_hex(db_session, game.id, 0, 0)
@@ -491,7 +490,6 @@ async def test_find_contested_hex_player_vs_ancient(db_session: AsyncSession):
     assert hex_tile.id in contested
 
 
-@pytest.mark.asyncio
 async def test_find_contested_hex_player_vs_player(db_session: AsyncSession):
     game, player_a, player_b = await _create_game_and_players(db_session, "contest2")
     hex_tile = await _create_hex(db_session, game.id, 1, 1)
@@ -503,7 +501,6 @@ async def test_find_contested_hex_player_vs_player(db_session: AsyncSession):
     assert hex_tile.id in contested
 
 
-@pytest.mark.asyncio
 async def test_find_contested_hex_single_player_not_contested(db_session: AsyncSession):
     game, player_a, player_b = await _create_game_and_players(db_session, "contest3")
     hex_tile = await _create_hex(db_session, game.id, 2, 2)
@@ -514,7 +511,6 @@ async def test_find_contested_hex_single_player_not_contested(db_session: AsyncS
     assert hex_tile.id not in contested
 
 
-@pytest.mark.asyncio
 async def test_find_contested_hex_empty_game(db_session: AsyncSession):
     game, player_a, player_b = await _create_game_and_players(db_session, "contest4")
     contested = await find_contested_hex_ids(game.id, db_session)
@@ -525,7 +521,6 @@ async def test_find_contested_hex_empty_game(db_session: AsyncSession):
 # resolve_combat_for_game (DB integration)
 # ---------------------------------------------------------------------------
 
-@pytest.mark.asyncio
 async def test_resolve_combat_creates_log(db_session: AsyncSession):
     import app.services.combat_service as cs
     original = cs.roll_attack
@@ -556,7 +551,6 @@ async def test_resolve_combat_creates_log(db_session: AsyncSession):
     assert len(logs[0].log_entries) > 0
 
 
-@pytest.mark.asyncio
 async def test_resolve_combat_removes_destroyed_ship(db_session: AsyncSession):
     import app.services.combat_service as cs
     original = cs.roll_attack
@@ -589,7 +583,6 @@ async def test_resolve_combat_removes_destroyed_ship(db_session: AsyncSession):
     assert destroyed.hex_tile_id is None
 
 
-@pytest.mark.asyncio
 async def test_resolve_combat_awards_vp_for_ancient_kill(db_session: AsyncSession):
     import app.services.combat_service as cs
     original = cs.roll_attack
@@ -615,7 +608,6 @@ async def test_resolve_combat_awards_vp_for_ancient_kill(db_session: AsyncSessio
     assert player_a.vp_count >= 2
 
 
-@pytest.mark.asyncio
 async def test_resolve_combat_no_contested_hexes_no_logs(db_session: AsyncSession):
     game, player_a, player_b = await _create_game_and_players(db_session, "resolve4")
     hex_a = await _create_hex(db_session, game.id, 0, 0)
@@ -632,7 +624,6 @@ async def test_resolve_combat_no_contested_hexes_no_logs(db_session: AsyncSessio
 # get_combat_logs (DB)
 # ---------------------------------------------------------------------------
 
-@pytest.mark.asyncio
 async def test_get_combat_logs_returns_all(db_session: AsyncSession):
     game, player_a, player_b = await _create_game_and_players(db_session, "logs1")
     hex_tile = await _create_hex(db_session, game.id, 0, 0)
@@ -653,7 +644,6 @@ async def test_get_combat_logs_returns_all(db_session: AsyncSession):
     assert len(logs) == 2
 
 
-@pytest.mark.asyncio
 async def test_get_combat_logs_filtered_by_round(db_session: AsyncSession):
     game, player_a, player_b = await _create_game_and_players(db_session, "logs2")
     hex_tile = await _create_hex(db_session, game.id, 0, 0)
@@ -679,7 +669,6 @@ async def test_get_combat_logs_filtered_by_round(db_session: AsyncSession):
 # retreat_ship (DB)
 # ---------------------------------------------------------------------------
 
-@pytest.mark.asyncio
 async def test_retreat_ship_valid(db_session: AsyncSession):
     game, player_a, player_b = await _create_game_and_players(db_session, "retreat1")
 
@@ -703,7 +692,6 @@ async def test_retreat_ship_valid(db_session: AsyncSession):
     assert updated_ship.hex_tile_id == hex_target.id
 
 
-@pytest.mark.asyncio
 async def test_retreat_ship_non_adjacent_rejected(db_session: AsyncSession):
     game, player_a, player_b = await _create_game_and_players(db_session, "retreat2")
 
@@ -723,7 +711,6 @@ async def test_retreat_ship_non_adjacent_rejected(db_session: AsyncSession):
         )
 
 
-@pytest.mark.asyncio
 async def test_retreat_ship_enemy_in_target_rejected(db_session: AsyncSession):
     game, player_a, player_b = await _create_game_and_players(db_session, "retreat3")
 
@@ -745,7 +732,6 @@ async def test_retreat_ship_enemy_in_target_rejected(db_session: AsyncSession):
         )
 
 
-@pytest.mark.asyncio
 async def test_retreat_ship_no_enemy_in_current_rejected(db_session: AsyncSession):
     game, player_a, player_b = await _create_game_and_players(db_session, "retreat4")
 
@@ -765,7 +751,6 @@ async def test_retreat_ship_no_enemy_in_current_rejected(db_session: AsyncSessio
         )
 
 
-@pytest.mark.asyncio
 async def test_retreat_ship_wrong_player_rejected(db_session: AsyncSession):
     game, player_a, player_b = await _create_game_and_players(db_session, "retreat5")
 
@@ -789,7 +774,7 @@ async def test_retreat_ship_wrong_player_rejected(db_session: AsyncSession):
 # API: GET /games/{id}/combat/logs
 # ---------------------------------------------------------------------------
 
-async def _register_and_login(client, email, username, password="pass123"):
+async def _register_and_login(client, email, username, password="testpass1"):
     await client.post(
         "/auth/register",
         json={"email": email, "username": username, "password": password},
@@ -844,7 +829,6 @@ async def _setup_started_game(client, tag: str) -> tuple[list[str], int]:
     return [t0, t1], game_id
 
 
-@pytest.mark.asyncio
 async def test_api_get_combat_logs_empty_for_new_game(db_client, db_session):
     tokens, game_id = await _setup_started_game(db_client, f"apilog_{id(db_client)}")
 
@@ -856,7 +840,6 @@ async def test_api_get_combat_logs_empty_for_new_game(db_client, db_session):
     assert resp.json() == []
 
 
-@pytest.mark.asyncio
 async def test_api_get_combat_logs_lobby_game_rejected(db_client, db_session):
     """Cannot view combat logs for a game still in lobby."""
     t0 = await _register_and_login(
@@ -876,7 +859,6 @@ async def test_api_get_combat_logs_lobby_game_rejected(db_client, db_session):
     assert resp.status_code == 400
 
 
-@pytest.mark.asyncio
 async def test_api_get_combat_logs_nonexistent_game(db_client, db_session):
     t0 = await _register_and_login(
         db_client, f"noexist_{id(db_client)}@t.com", f"noexist_{id(db_client)}"
@@ -892,7 +874,6 @@ async def test_api_get_combat_logs_nonexistent_game(db_client, db_session):
 # API: POST /games/{id}/combat/retreat
 # ---------------------------------------------------------------------------
 
-@pytest.mark.asyncio
 async def test_api_retreat_wrong_phase_rejected(db_client, db_session):
     """Retreat endpoint should return 400 when game is not in combat phase."""
     tokens, game_id = await _setup_started_game(db_client, f"apiretreat_{id(db_client)}")

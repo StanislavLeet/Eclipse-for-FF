@@ -311,11 +311,6 @@ function buildGameCard(game) {
         openBtn.textContent = game.status === 'finished' ? 'View' : 'Play';
         openBtn.addEventListener('click', function () { openGame(game.id); });
         actionsEl.appendChild(openBtn);
-    } else {
-        const viewBtn = document.createElement('button');
-        viewBtn.textContent = 'View';
-        viewBtn.addEventListener('click', function () { openGame(game.id); });
-        actionsEl.appendChild(viewBtn);
     }
 
     return card;
@@ -523,7 +518,7 @@ async function deleteGame(gameId, gameName) {
     try {
         const response = await apiFetch(`/games/${gameId}`, { method: 'DELETE' });
         alert(response.detail || 'Delete request sent');
-        if (state.currentGame && Number(state.currentGame.id) === Number(gameId)) {
+        if (response.detail === 'Game deleted' && state.currentGame && Number(state.currentGame.id) === Number(gameId)) {
             state.currentGame = null;
             showSection('lobby-section');
         }

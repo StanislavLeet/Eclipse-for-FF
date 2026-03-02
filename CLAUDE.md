@@ -141,3 +141,5 @@ Migration files live in `alembic/versions/`. The `env.py` uses `asyncio.run` to 
 2. **`class Config` in Settings** — use `SettingsConfigDict` instead or pydantic will warn/error.
 3. **`asyncio_mode = "auto"`** — do NOT add `@pytest.mark.asyncio` to individual tests; the global setting covers all async tests.
 4. **Function-scoped fixtures** — using session-scoped fixtures with `asyncio_mode = "auto"` causes event loop conflicts. Keep all fixtures function-scoped.
+5. **Game deletion is status-dependent** — `DELETE /games/{id}` for a **lobby** game calls `delete_game_directly()` and returns immediately. For an **active** game it calls `request_or_approve_game_deletion()` to start an approval workflow. Never route lobby deletions through the approval workflow; doing so creates a `GameDeletionRequest` record instead of deleting the game.
+6. **Species `"random"` is resolved server-side** — `POST /games/{id}/select-species` accepts the literal string `"random"` and picks a free species on the server. Do not resolve `"random"` to a concrete species on the client; the server is the only place with a consistent view of taken species.

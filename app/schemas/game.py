@@ -23,6 +23,7 @@ class GameCreate(BaseModel):
 class PlayerResponse(BaseModel):
     id: int
     user_id: int
+    username: Optional[str] = None
     species: Optional[Species]
     turn_order: Optional[int]
     is_active_turn: bool

@@ -108,6 +108,13 @@ async def get_player_resources_endpoint(
             detail="Game has not started yet",
         )
 
+    requester = await get_player_in_game(db, game_id, current_user.id)
+    if requester is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not a player in this game",
+        )
+
     players = await get_players_for_game(db, game_id)
     player = next((p for p in players if p.id == player_id), None)
     if player is None:

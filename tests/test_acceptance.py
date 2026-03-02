@@ -24,7 +24,7 @@ from httpx import AsyncClient
 # ---------------------------------------------------------------------------
 
 async def register_and_login(
-    client: AsyncClient, email: str, username: str, password: str = "pass123"
+    client: AsyncClient, email: str, username: str, password: str = "testpass1"
 ) -> str:
     await client.post(
         "/auth/register",

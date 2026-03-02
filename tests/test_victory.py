@@ -24,6 +24,7 @@ from app.services.victory_service import (
     calculate_tech_vp,
     determine_winner,
     finalize_game,
+    get_scores,
 )
 
 
@@ -326,10 +327,10 @@ class TestEndGameTrigger:
 async def _setup_active_game(client: AsyncClient) -> tuple[int, str, str]:
     """Create and start a 2-player game. Returns (game_id, token1, token2)."""
     # Register two players
-    await client.post("/auth/register", json={"email": "sc1@ex.com", "username": "sc1", "password": "pass123"})
-    await client.post("/auth/register", json={"email": "sc2@ex.com", "username": "sc2", "password": "pass123"})
-    r1 = await client.post("/auth/login", json={"email": "sc1@ex.com", "password": "pass123"})
-    r2 = await client.post("/auth/login", json={"email": "sc2@ex.com", "password": "pass123"})
+    await client.post("/auth/register", json={"email": "sc1@ex.com", "username": "sc1", "password": "testpass1"})
+    await client.post("/auth/register", json={"email": "sc2@ex.com", "username": "sc2", "password": "testpass1"})
+    r1 = await client.post("/auth/login", json={"email": "sc1@ex.com", "password": "testpass1"})
+    r2 = await client.post("/auth/login", json={"email": "sc2@ex.com", "password": "testpass1"})
     token1 = r1.json()["access_token"]
     token2 = r2.json()["access_token"]
 
@@ -376,8 +377,8 @@ async def _setup_active_game(client: AsyncClient) -> tuple[int, str, str]:
 
 class TestScoresEndpoint:
     async def test_scores_not_available_in_lobby(self, db_client: AsyncClient):
-        await db_client.post("/auth/register", json={"email": "sc_lob@ex.com", "username": "sclob", "password": "pass123"})
-        r = await db_client.post("/auth/login", json={"email": "sc_lob@ex.com", "password": "pass123"})
+        await db_client.post("/auth/register", json={"email": "sc_lob@ex.com", "username": "sclob", "password": "testpass1"})
+        r = await db_client.post("/auth/login", json={"email": "sc_lob@ex.com", "password": "testpass1"})
         token = r.json()["access_token"]
         g = await db_client.post(
             "/games", json={"name": "LobbyGame", "max_players": 4},
@@ -415,12 +416,17 @@ class TestScoresEndpoint:
             assert "vp_count" in player_score
             assert isinstance(player_score["vp_count"], int)
 
-    async def test_scores_sorted_by_vp_descending(self, db_client: AsyncClient):
-        game_id, token1, _ = await _setup_active_game(db_client)
-        resp = await db_client.get(
-            f"/games/{game_id}/scores",
-            headers={"Authorization": f"Bearer {token1}"},
-        )
-        data = resp.json()
-        vp_values = [p["vp_count"] for p in data["players"]]
+    async def test_scores_sorted_by_vp_descending(self, db_session: AsyncSession):
+        # Use db_session to set differentiated VP values so the sort is non-trivial
+        u1 = await _create_user(db_session, "sort_vp1@example.com")
+        u2 = await _create_user(db_session, "sort_vp2@example.com")
+        game = await _create_game(db_session)
+        await _create_player(db_session, game, u1, vp=10, turn_order=0)
+        await _create_player(db_session, game, u2, vp=3, turn_order=1)
+        await db_session.commit()
+
+        scores = await get_scores(db_session, game.id)
+        vp_values = [s["vp_count"] for s in scores]
         assert vp_values == sorted(vp_values, reverse=True)
+        assert vp_values[0] == 10
+        assert vp_values[1] == 3

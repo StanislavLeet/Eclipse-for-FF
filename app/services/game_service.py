@@ -85,17 +85,20 @@ async def join_game(db: AsyncSession, game: Game, user: User, token: str | None 
     if existing is not None:
         raise ValueError("Already joined this game")
 
+    invite = None
     if token is not None:
         invite = await get_invite_by_token(db, token)
         if invite is None or invite.game_id != game.id:
             raise ValueError("Invalid invite token")
         if invite.accepted:
             raise ValueError("Invite already used")
-        invite.accepted = True
 
     players = await get_players_for_game(db, game.id)
     if len(players) >= game.max_players:
         raise ValueError("Game is full")
+
+    if invite is not None:
+        invite.accepted = True
 
     turn_order = len(players)
     player = Player(game_id=game.id, user_id=user.id, turn_order=turn_order)
@@ -173,8 +176,8 @@ async def start_game(db: AsyncSession, game: Game, user: User) -> Game:
     return game
 
 
-async def delete_game_directly(db: AsyncSession, game: Game) -> None:
-    """Delete a game and all its associated data without an approval workflow."""
+async def _cascade_delete_game_data(db: AsyncSession, game: Game, player_ids: list[int]) -> None:
+    """Delete all child records for a game in dependency order. Does not commit."""
     from app.models.combat_log import CombatLog
     from app.models.council import CouncilState
     from app.models.discovery_tile import DiscoveryTile
@@ -186,8 +189,6 @@ async def delete_game_directly(db: AsyncSession, game: Game) -> None:
     from app.models.ship import Ship
     from app.models.ship_blueprint import ShipBlueprint
     from app.models.system import System
-
-    player_ids = [p.id for p in await get_players_for_game(db, game.id)]
 
     await db.execute(delete(GameAction).where(GameAction.game_id == game.id))
 
@@ -210,6 +211,12 @@ async def delete_game_directly(db: AsyncSession, game: Game) -> None:
 
     await db.execute(delete(HexTile).where(HexTile.game_id == game.id))
     await db.execute(delete(Player).where(Player.game_id == game.id))
+
+
+async def delete_game_directly(db: AsyncSession, game: Game) -> None:
+    """Delete a game and all its associated data without an approval workflow."""
+    player_ids = [p.id for p in await get_players_for_game(db, game.id)]
+    await _cascade_delete_game_data(db, game, player_ids)
     await db.delete(game)
     await db.commit()
 
@@ -306,43 +313,10 @@ async def _delete_game_if_all_approved(
 
     player_ids = [p.id for p in await get_players_for_game(db, game.id)]
 
-    await db.execute(delete(GameAction).where(GameAction.game_id == game.id))
-
-    from app.models.combat_log import CombatLog
-    from app.models.council import CouncilState
-    from app.models.discovery_tile import DiscoveryTile
-    from app.models.game_invite import GameInvite
-    from app.models.hex_tile import HexTile
-    from app.models.planet_population import PlanetPopulation
-    from app.models.player_resources import PlayerResources
-    from app.models.player_technology import PlayerTechnology
-    from app.models.ship import Ship
-    from app.models.ship_blueprint import ShipBlueprint
-    from app.models.system import System
-
-    if player_ids:
-        await db.execute(delete(PlayerResources).where(PlayerResources.player_id.in_(player_ids)))
-        await db.execute(delete(PlayerTechnology).where(PlayerTechnology.player_id.in_(player_ids)))
-        await db.execute(delete(ShipBlueprint).where(ShipBlueprint.player_id.in_(player_ids)))
-        await db.execute(delete(PlanetPopulation).where(PlanetPopulation.owner_player_id.in_(player_ids)))
-
-    await db.execute(delete(CombatLog).where(CombatLog.game_id == game.id))
-    await db.execute(delete(CouncilState).where(CouncilState.game_id == game.id))
-    await db.execute(delete(DiscoveryTile).where(DiscoveryTile.game_id == game.id))
-    await db.execute(delete(GameInvite).where(GameInvite.game_id == game.id))
-    await db.execute(delete(Ship).where(Ship.game_id == game.id))
-
-    tile_ids_result = await db.execute(select(HexTile.id).where(HexTile.game_id == game.id))
-    tile_ids = [row[0] for row in tile_ids_result.all()]
-    if tile_ids:
-        await db.execute(delete(System).where(System.hex_tile_id.in_(tile_ids)))
-
-    await db.execute(delete(HexTile).where(HexTile.game_id == game.id))
-    await db.execute(delete(Player).where(Player.game_id == game.id))
-
     await db.execute(delete(GameDeletionApproval).where(GameDeletionApproval.request_id == request.id))
     await db.execute(delete(GameDeletionRequest).where(GameDeletionRequest.id == request.id))
 
+    await _cascade_delete_game_data(db, game, player_ids)
     await db.delete(game)
     await db.commit()
     return True

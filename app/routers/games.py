@@ -1,6 +1,7 @@
 import random
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.data.species import list_species
@@ -34,6 +35,7 @@ from app.services.game_service import (
     get_game,
     get_game_deletion_approvals,
     get_game_deletion_request,
+    get_player_in_game,
     get_players_for_game,
     list_games_for_user,
     join_game,
@@ -70,6 +72,13 @@ async def _build_deletion_status(
 
 
 async def _game_response_for_user(db: AsyncSession, game, players, current_user_id: int) -> GameResponse:
+    user_ids = [p.user_id for p in players]
+    username_map: dict[int, str] = {}
+    if user_ids:
+        result = await db.execute(select(User).where(User.id.in_(user_ids)))
+        for u in result.scalars().all():
+            username_map[u.id] = u.username
+
     return GameResponse(
         id=game.id,
         name=game.name,
@@ -79,7 +88,18 @@ async def _game_response_for_user(db: AsyncSession, game, players, current_user_
         max_players=game.max_players,
         host_user_id=game.host_user_id,
         created_at=game.created_at,
-        players=[PlayerResponse.model_validate(p) for p in players],
+        players=[
+            PlayerResponse(
+                id=p.id,
+                user_id=p.user_id,
+                username=username_map.get(p.user_id),
+                species=p.species,
+                turn_order=p.turn_order,
+                is_active_turn=p.is_active_turn,
+                vp_count=p.vp_count,
+            )
+            for p in players
+        ],
         deletion_status=await _build_deletion_status(db, game.id, current_user_id),
     )
 
@@ -309,6 +329,9 @@ async def get_game_map(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Map is not available until the game has started",
         )
+    player = await get_player_in_game(db, game_id, current_user.id)
+    if player is None:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a player in this game")
     tiles = await get_map_tiles(db, game_id)
     result: list[HexTileResponse] = []
     for tile in tiles:
@@ -353,6 +376,9 @@ async def get_game_scores(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Scores are not available until the game has started",
         )
+    player = await get_player_in_game(db, game_id, current_user.id)
+    if player is None:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a player in this game")
     from app.services.victory_service import get_scores
     standings = await get_scores(db, game_id)
 

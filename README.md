@@ -163,7 +163,7 @@ venv/bin/alembic revision --autogenerate -m "describe change"
 | Router | Base path | Purpose |
 |---|---|---|
 | auth | `/auth` | Register, login, JWT, logout |
-| games | `/games` | Create/join games, lobby, invites |
+| games | `/games` | Create/join games, lobby, invites, deletion |
 | turns | `/turns` | Submit actions, advance phases |
 | research | `/research` | Research technologies |
 | ships | `/ships` | Build ships, upgrade blueprints |
@@ -171,6 +171,33 @@ venv/bin/alembic revision --autogenerate -m "describe change"
 | council | `/council` | Galactic Council votes and resolutions |
 
 Interactive API docs: `GET /docs` (Swagger UI) or `GET /redoc`.
+
+### Game Lifecycle Endpoints
+
+#### Inviting and Joining
+
+| Endpoint | Auth | Description |
+|---|---|---|
+| `POST /games/{id}/invite` | Player in game | Send an invite; body: `{"invitee_email": "<email>"}`. Returns a token. |
+| `POST /games/{id}/join` | Any user | Join via token; body: `{"token": "<token>"}`. |
+
+#### Species Selection
+
+`POST /games/{id}/select-species` — body: `{"species": "<species_id>"}`.
+
+- Pass any valid species ID to select that species. All species are exclusive except `"human"`, which multiple players may pick simultaneously.
+- Pass `"random"` to have the server assign an available species at random (server-side, taking already-chosen species into account).
+
+#### Game Deletion
+
+| Endpoint | Auth | Description |
+|---|---|---|
+| `DELETE /games/{id}` | Host only | Delete a lobby game immediately, or initiate a player-approval workflow for an active game. |
+| `POST /games/{id}/delete/approve` | Player in game | Approve a pending deletion request. Game is deleted once all players approve. |
+
+Lobby games are deleted instantly by the host. Active games require the host to initiate deletion and every other player to approve via the approval endpoint.
+
+All `GameResponse` objects include a `deletion_status` field (null when no deletion is in progress) with fields: `request_id`, `status`, `requested_by_user_id`, `pending_approvals`, `is_current_user_approved`, `can_current_user_approve`.
 
 ---
 

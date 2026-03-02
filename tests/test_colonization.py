@@ -153,7 +153,6 @@ def test_cube_type_mapping():
 # execute_colonize
 # ---------------------------------------------------------------------------
 
-@pytest.mark.asyncio
 async def test_colonize_success_money_planet(db_session: AsyncSession):
     game, player = await _make_game_and_player(db_session)
     planets = [{"type": "money", "advanced": False}]
@@ -179,7 +178,6 @@ async def test_colonize_success_money_planet(db_session: AsyncSession):
     assert populations[0].planet_slot == 0
 
 
-@pytest.mark.asyncio
 async def test_colonize_success_science_planet(db_session: AsyncSession):
     game, player = await _make_game_and_player(db_session)
     planets = [{"type": "science", "advanced": False}]
@@ -192,7 +190,6 @@ async def test_colonize_success_science_planet(db_session: AsyncSession):
     assert result["cube_type"] == "advanced"
 
 
-@pytest.mark.asyncio
 async def test_colonize_success_materials_planet(db_session: AsyncSession):
     game, player = await _make_game_and_player(db_session)
     planets = [{"type": "materials", "advanced": False}]
@@ -205,7 +202,6 @@ async def test_colonize_success_materials_planet(db_session: AsyncSession):
     assert result["cube_type"] == "gauss"
 
 
-@pytest.mark.asyncio
 async def test_colonize_consumes_colony_ship(db_session: AsyncSession):
     game, player = await _make_game_and_player(db_session)
     planets = [{"type": "money", "advanced": False}]
@@ -222,7 +218,6 @@ async def test_colonize_consumes_colony_ship(db_session: AsyncSession):
     assert result.scalar_one_or_none() is None
 
 
-@pytest.mark.asyncio
 async def test_colonize_deducts_cube_from_supply(db_session: AsyncSession):
     game, player = await _make_game_and_player(db_session)
     planets = [{"type": "money", "advanced": False}]
@@ -244,7 +239,6 @@ async def test_colonize_deducts_cube_from_supply(db_session: AsyncSession):
     assert resources.population_cubes["orbital"] == 4
 
 
-@pytest.mark.asyncio
 async def test_colonize_rejects_no_colony_ship(db_session: AsyncSession):
     game, player = await _make_game_and_player(db_session)
     planets = [{"type": "money", "advanced": False}]
@@ -257,7 +251,6 @@ async def test_colonize_rejects_no_colony_ship(db_session: AsyncSession):
         await execute_colonize(db_session, game.id, player.id, hex_tile.id, 0)
 
 
-@pytest.mark.asyncio
 async def test_colonize_rejects_unowned_hex(db_session: AsyncSession):
     game, player = await _make_game_and_player(db_session)
     # Hex owned by nobody
@@ -286,7 +279,6 @@ async def test_colonize_rejects_unowned_hex(db_session: AsyncSession):
         await execute_colonize(db_session, game.id, player.id, hex_tile.id, 0)
 
 
-@pytest.mark.asyncio
 async def test_colonize_rejects_unexplored_hex(db_session: AsyncSession):
     game, player = await _make_game_and_player(db_session)
     hex_tile = HexTile(
@@ -314,7 +306,6 @@ async def test_colonize_rejects_unexplored_hex(db_session: AsyncSession):
         await execute_colonize(db_session, game.id, player.id, hex_tile.id, 0)
 
 
-@pytest.mark.asyncio
 async def test_colonize_rejects_invalid_planet_slot(db_session: AsyncSession):
     game, player = await _make_game_and_player(db_session)
     planets = [{"type": "money", "advanced": False}]
@@ -327,7 +318,6 @@ async def test_colonize_rejects_invalid_planet_slot(db_session: AsyncSession):
         await execute_colonize(db_session, game.id, player.id, hex_tile.id, 5)
 
 
-@pytest.mark.asyncio
 async def test_colonize_rejects_slot_already_occupied(db_session: AsyncSession):
     game, player = await _make_game_and_player(db_session)
     planets = [{"type": "money", "advanced": False}]
@@ -350,7 +340,6 @@ async def test_colonize_rejects_slot_already_occupied(db_session: AsyncSession):
         await execute_colonize(db_session, game.id, player.id, hex_tile.id, 0)
 
 
-@pytest.mark.asyncio
 async def test_colonize_max_population_enforced(db_session: AsyncSession):
     """Hex with 1 planet slot can only hold 1 cube — attempting to add a second fails."""
     game, player = await _make_game_and_player(db_session)
@@ -411,7 +400,6 @@ async def test_colonize_max_population_enforced(db_session: AsyncSession):
 # Population growth via INFLUENCE
 # ---------------------------------------------------------------------------
 
-@pytest.mark.asyncio
 async def test_population_growth_success(db_session: AsyncSession):
     game, player = await _make_game_and_player(db_session)
     planets = [{"type": "science", "advanced": False}]
@@ -432,7 +420,6 @@ async def test_population_growth_success(db_session: AsyncSession):
     assert populations[0].population_type == "advanced"
 
 
-@pytest.mark.asyncio
 async def test_population_growth_rejects_unowned_hex(db_session: AsyncSession):
     game, player = await _make_game_and_player(db_session)
     planets = [{"type": "science", "advanced": False}]
@@ -450,7 +437,6 @@ async def test_population_growth_rejects_unowned_hex(db_session: AsyncSession):
 # calculate_colony_income
 # ---------------------------------------------------------------------------
 
-@pytest.mark.asyncio
 async def test_colony_income_regular_planets(db_session: AsyncSession):
     game, player = await _make_game_and_player(db_session)
     planets = [
@@ -476,7 +462,6 @@ async def test_colony_income_regular_planets(db_session: AsyncSession):
     assert income == {"money": 1, "science": 1, "materials": 1}
 
 
-@pytest.mark.asyncio
 async def test_colony_income_advanced_planets(db_session: AsyncSession):
     game, player = await _make_game_and_player(db_session)
     planets = [
@@ -503,7 +488,6 @@ async def test_colony_income_advanced_planets(db_session: AsyncSession):
     assert income["materials"] == 0
 
 
-@pytest.mark.asyncio
 async def test_colony_income_empty_no_colonies(db_session: AsyncSession):
     game, player = await _make_game_and_player(db_session)
     income = await calculate_colony_income(db_session, player.id)
@@ -514,14 +498,12 @@ async def test_colony_income_empty_no_colonies(db_session: AsyncSession):
 # count_colony_discs_for_player
 # ---------------------------------------------------------------------------
 
-@pytest.mark.asyncio
 async def test_count_colony_discs_no_hexes(db_session: AsyncSession):
     game, player = await _make_game_and_player(db_session)
     count = await count_colony_discs_for_player(db_session, player.id)
     assert count == 0
 
 
-@pytest.mark.asyncio
 async def test_count_colony_discs_with_owned_hexes(db_session: AsyncSession):
     game, player = await _make_game_and_player(db_session)
     for i in range(3):
@@ -540,7 +522,6 @@ async def test_count_colony_discs_with_owned_hexes(db_session: AsyncSession):
 # remove_population_from_hex
 # ---------------------------------------------------------------------------
 
-@pytest.mark.asyncio
 async def test_remove_population_from_hex_returns_cubes(db_session: AsyncSession):
     game, player = await _make_game_and_player(db_session)
     planets = [
@@ -578,7 +559,6 @@ async def test_remove_population_from_hex_returns_cubes(db_session: AsyncSession
     assert list(pop_result.scalars().all()) == []
 
 
-@pytest.mark.asyncio
 async def test_remove_population_from_hex_empty(db_session: AsyncSession):
     game, player = await _make_game_and_player(db_session)
     planets = [{"type": "money", "advanced": False}]
@@ -594,7 +574,6 @@ async def test_remove_population_from_hex_empty(db_session: AsyncSession):
 # remove_one_colony_for_bankruptcy
 # ---------------------------------------------------------------------------
 
-@pytest.mark.asyncio
 async def test_bankruptcy_removes_colony(db_session: AsyncSession):
     game, player = await _make_game_and_player(db_session)
     planets = [{"type": "money", "advanced": False}]
@@ -614,7 +593,6 @@ async def test_bankruptcy_removes_colony(db_session: AsyncSession):
     assert hex_tile.owner_player_id is None
 
 
-@pytest.mark.asyncio
 async def test_bankruptcy_returns_false_when_no_colonies(db_session: AsyncSession):
     game, player = await _make_game_and_player(db_session)
     removed = await remove_one_colony_for_bankruptcy(db_session, player.id)
@@ -625,7 +603,6 @@ async def test_bankruptcy_returns_false_when_no_colonies(db_session: AsyncSessio
 # Upkeep with colony income
 # ---------------------------------------------------------------------------
 
-@pytest.mark.asyncio
 async def test_upkeep_includes_colony_income(db_session: AsyncSession):
     game, player = await _make_game_and_player(db_session)
     planets = [
@@ -670,7 +647,6 @@ async def test_upkeep_includes_colony_income(db_session: AsyncSession):
     assert resources.money == initial_money + 1 - 1  # +1 income - 1 cost
 
 
-@pytest.mark.asyncio
 async def test_upkeep_bankruptcy_removes_hex(db_session: AsyncSession):
     """Player with 0 money cannot afford influence cost — goes bankrupt."""
     game, player = await _make_game_and_player(db_session)
@@ -702,13 +678,11 @@ async def test_upkeep_bankruptcy_removes_hex(db_session: AsyncSession):
 # colony_ship build
 # ---------------------------------------------------------------------------
 
-@pytest.mark.asyncio
 async def test_build_colony_ship_costs_2_materials(db_session: AsyncSession):
     from app.services.resource_service import BUILD_COSTS
     assert BUILD_COSTS["colony_ship"] == 2
 
 
-@pytest.mark.asyncio
 async def test_build_colony_ship_creates_ship(db_session: AsyncSession):
     from app.services.ship_service import build_ship
     from app.services.resource_service import validate_and_deduct_build_cost
@@ -746,7 +720,7 @@ async def test_build_colony_ship_creates_ship(db_session: AsyncSession):
 # API integration: COLONIZE via POST /games/{id}/action
 # ---------------------------------------------------------------------------
 
-async def _register_and_login(client, email, username, password="pass123"):
+async def _register_and_login(client, email, username, password="testpass1"):
     await client.post(
         "/auth/register",
         json={"email": email, "username": username, "password": password},
@@ -796,7 +770,6 @@ async def _setup_two_player_game(client):
     return [t0, t1], game_id
 
 
-@pytest.mark.asyncio
 async def test_api_colonize_action_rejected_without_colony_ship(db_client, db_session):
     """COLONIZE via API with no colony ship should return 400."""
     tokens, game_id = await _setup_two_player_game(db_client)
